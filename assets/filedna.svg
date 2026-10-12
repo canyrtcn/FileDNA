@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="FileDNA icon">
+  <defs>
+    <linearGradient id="page" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#294d70"/>
+      <stop offset="100%" stop-color="#142943"/>
+    </linearGradient>
+    <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#b8ddf1"/>
+      <stop offset="100%" stop-color="#408ac5"/>
+    </linearGradient>
+  </defs>
+  <rect x="37" y="21" width="140" height="183" rx="20" fill="#264464" stroke="#5f7892" stroke-width="3"/>
+  <path d="M139 21v38h38" fill="#3e6587"/>
+  <rect x="70" y="51" width="139" height="175" rx="20" fill="url(#page)" stroke="#65a6de" stroke-width="4"/>
+  <path d="M174 51v35h35" fill="#34719e"/>
+  <g stroke="#5b81a5" stroke-linecap="round" stroke-width="6">
+    <path d="M93 92h61M93 110h81M93 128h61"/>
+  </g>
+  <circle cx="151" cy="160" r="58" fill="#102034" stroke="url(#lens)" stroke-width="7"/>
+  <path d="M126 123c-22 24-9 52 11 71" fill="none" stroke="#4b97ed" stroke-linecap="round" stroke-width="9"/>
+  <path d="M176 123c22 24 9 52-11 71" fill="none" stroke="#72d0cc" stroke-linecap="round" stroke-width="9"/>
+  <g stroke="#c9e6f6" stroke-width="5" stroke-linecap="round">
+    <path d="M145 141h21M130 159h29M144 177h21"/>
+  </g>
+  <path d="M195 203l38 39" stroke="#102034" stroke-width="25" stroke-linecap="round"/>
+  <path d="M195 203l38 39" stroke="#a4cde9" stroke-width="13" stroke-linecap="round"/>
+</svg>

@@ -23,17 +23,20 @@ from .scanner import ScanCancelled, ScanReport, scan_directory
 GITHUB_PROFILE = "https://github.com/canyrtcn"
 GITHUB_REPO = "https://github.com/canyrtcn/FileDNA"
 
-BG = "#0d131d"
-PANEL = "#151e2b"
-FIELD = "#1a2637"
-BORDER = "#29384b"
-FG = "#f1f4f8"
-MUTED = "#9eafc5"
-DIM = "#74869d"
-ACCENT = "#428ce5"
-HOVER = "#5c9ded"
-GREEN = "#67cba3"
-AMBER = "#e6b667"
+# Restrained graphite / amber palette. Keep status green for non-actionable values.
+BG = "#121110"
+PANEL = "#201d1a"
+FIELD = "#29251f"
+BORDER = "#493d2d"
+FG = "#f3eee6"
+MUTED = "#c0b6a8"
+DIM = "#9c8b77"
+ACCENT = "#f3b544"
+HOVER = "#ffd17a"
+GREEN = "#8fc5a2"
+AMBER = "#e4a338"
+BUTTON_DISABLED = "#231f1b"
+DARK_INK = "#21170c"
 
 # The first value is English, the second Turkish. Active language is the
 # large, primary label; the alternative remains a subtle secondary label.
@@ -90,47 +93,141 @@ def asset_path(name: str) -> Path:
     return root / "assets" / name
 
 
-class ActionButton(tk.Frame):
-    """A two-line clickable button, with deliberate active and disabled states."""
+def _rounded_shape(canvas, x0, y0, x1, y1, radius, fill, outline=""):
+    """Draw a smooth rounded rectangle on Tk Canvas without a new GUI dependency."""
+    if x1 <= x0 or y1 <= y0:
+        return
+    r = max(0, min(radius, (x1 - x0) / 2, (y1 - y0) / 2))
+    # Duplicate control points keep edges straight and round only the corners.
+    points = [
+        x0 + r, y0, x0 + r, y0,
+        x1 - r, y0, x1 - r, y0,
+        x1, y0, x1, y0 + r, x1, y0 + r,
+        x1, y1 - r, x1, y1 - r,
+        x1, y1, x1 - r, y1, x1 - r, y1,
+        x0 + r, y1, x0 + r, y1,
+        x0, y1, x0, y1 - r, x0, y1 - r,
+        x0, y0 + r, x0, y0 + r,
+        x0, y0, x0 + r, y0,
+    ]
+    canvas.create_polygon(points, smooth=True, splinesteps=16,
+                          fill=fill, outline=outline, width=1)
+
+
+class RoundedPanel(tk.Canvas):
+    """Rounded outline with a safe rectangular content area inset from its corners."""
+
+    def __init__(self, parent, *, surface=PANEL, border=BORDER,
+                 radius=15, inset=8, height=125, **kwargs):
+        super().__init__(parent, bg=parent.cget("bg"), height=height,
+                         bd=0, highlightthickness=0, **kwargs)
+        self._surface = surface
+        self._border = border
+        self._radius = radius
+        self._inset = inset
+        self.body = tk.Frame(self, bg=surface)
+        self._body_window = self.create_window(inset, inset,
+                                                anchor="nw", window=self.body)
+        self.bind("<Configure>", self._resize_panel)
+
+    def _resize_panel(self, _event=None):
+        w, h = self.winfo_width(), self.winfo_height()
+        if w < 2 or h < 2:
+            return
+        self.delete("panel-background")
+        # Keep the shape behind the embedded widget.
+        old = set(self.find_all())
+        _rounded_shape(self, 1, 1, w - 1, h - 1, self._radius,
+                       self._surface, self._border)
+        for item in set(self.find_all()) - old:
+            self.addtag_withtag("panel-background", item)
+            self.tag_lower(item)
+        self.itemconfigure(self._body_window,
+                           width=max(1, w - 2 * self._inset),
+                           height=max(1, h - 2 * self._inset))
+
+
+class ActionButton(tk.Canvas):
+    """Keyboard-accessible rounded two-line button retaining legacy test hooks."""
+
     def __init__(self, parent, callback, *, primary=False, width=130):
-        super().__init__(parent, bg=BORDER, width=width)
-        self.pack_propagate(False)
+        super().__init__(parent, bg=parent.cget("bg"), width=width, height=59,
+                         bd=0, highlightthickness=0, takefocus=1, cursor="hand2")
         self.callback = callback
         self.primary = primary
         self.enabled = True
-        self.surface = tk.Frame(self, bg=ACCENT if primary else FIELD)
-        self.surface.pack(fill="both", expand=True, padx=1, pady=1)
-        self.main = tk.Label(self.surface, bg=self.surface["bg"], fg=FG,
-                             font=("Segoe UI Semibold", 10))
-        self.main.pack(pady=(9, 0))
-        self.small = tk.Label(self.surface, bg=self.surface["bg"],
-                              fg="#e3efff" if primary else MUTED,
-                              font=("Segoe UI", 8))
-        self.small.pack(pady=(1, 9))
-        for child in (self, self.surface, self.main, self.small):
-            child.bind("<Button-1>", lambda _: self.click())
-            child.bind("<Enter>", lambda _: self.paint(True))
-            child.bind("<Leave>", lambda _: self.paint(False))
+        self._hovered = False
+        self._title_window = None
+        self._sub_window = None
+        self.surface = self  # legacy attribute retained for GUI regression tests
+        self.main = tk.Label(self, bg=ACCENT if primary else FIELD,
+                             fg=DARK_INK if primary else FG,
+                             font=("Segoe UI Semibold", 10), bd=0)
+        self.small = tk.Label(self, bg=ACCENT if primary else FIELD,
+                              fg="#694817" if primary else MUTED,
+                              font=("Segoe UI", 8), bd=0)
+        self._title_window = self.create_window(width / 2, 22,
+                                                  window=self.main, anchor="center")
+        self._sub_window = self.create_window(width / 2, 41,
+                                                window=self.small, anchor="center")
+        self.bind("<Configure>", self._redraw)
+        self.bind("<Button-1>", lambda _e: self.click())
+        self.bind("<Return>", lambda _e: self.click())
+        self.bind("<space>", lambda _e: self.click())
+        self.bind("<Enter>", lambda _e: self.paint(True))
+        self.bind("<Leave>", lambda _e: self.paint(False))
+        for child in (self.main, self.small):
+            child.bind("<Button-1>", lambda _e: self.click())
+            child.bind("<Enter>", lambda _e: self.paint(True))
+            child.bind("<Leave>", lambda _e: self.paint(False))
         self.paint(False)
 
     def set_text(self, primary: str, secondary: str):
-        self.main.config(text=primary)
-        self.small.config(text=secondary)
+        self.main.configure(text=primary)
+        self.small.configure(text=secondary)
 
     def enable(self, value: bool):
         self.enabled = value
+        self.configure(cursor="hand2" if value else "arrow")
         self.paint(False)
         for label in (self.main, self.small):
             label.configure(cursor="hand2" if value else "arrow")
 
     def paint(self, hover: bool):
-        background = (HOVER if hover else ACCENT) if self.primary else ("#223956" if hover else FIELD)
+        self._hovered = hover if self.enabled else False
         if not self.enabled:
-            background = BG
-        self.surface.configure(bg=background)
-        self.main.configure(bg=background, fg=FG if self.enabled else DIM)
-        self.small.configure(bg=background,
-                             fg=("#e3efff" if self.primary else MUTED) if self.enabled else DIM)
+            fill = BUTTON_DISABLED
+        elif self.primary:
+            fill = HOVER if hover else ACCENT
+        else:
+            fill = "#393024" if hover else FIELD
+        self.main.configure(bg=fill,
+                            fg=DARK_INK if self.primary and self.enabled else
+                            FG if self.enabled else DIM)
+        self.small.configure(bg=fill,
+                             fg="#694817" if self.primary and self.enabled else
+                             MUTED if self.enabled else DIM)
+        self._redraw()
+
+    def _redraw(self, _event=None):
+        w, h = self.winfo_width(), self.winfo_height()
+        if w < 2 or h < 2:
+            return
+        self.delete("button-background")
+        old = set(self.find_all())
+        if not self.enabled:
+            fill = BUTTON_DISABLED
+        elif self.primary:
+            fill = HOVER if self._hovered else ACCENT
+        else:
+            fill = "#393024" if self._hovered else FIELD
+        _rounded_shape(self, 1, 1, w - 1, h - 1, 12, fill,
+                       ACCENT if self.primary and self.enabled else BORDER)
+        for item in set(self.find_all()) - old:
+            self.addtag_withtag("button-background", item)
+            self.tag_lower(item)
+        self.coords(self._title_window, w / 2, h / 2 - 9)
+        self.coords(self._sub_window, w / 2, h / 2 + 10)
 
     def click(self):
         if self.enabled:
@@ -204,7 +301,7 @@ class FileDNAApp(tk.Tk):
         style.configure("DNA.Treeview.Heading", background=FIELD, foreground=MUTED,
                         borderwidth=0, relief="flat", padding=(12, 13),
                         font=("Segoe UI Semibold", 10))
-        style.map("DNA.Treeview", background=[("selected", "#223956")],
+        style.map("DNA.Treeview", background=[("selected", "#594020")],
                   foreground=[("selected", FG)])
         style.configure("DNA.Vertical.TScrollbar", background=FIELD,
                         troughcolor=PANEL, arrowcolor=MUTED, borderwidth=0)
@@ -245,14 +342,14 @@ class FileDNAApp(tk.Tk):
         self.folder_title.pack(anchor="w", pady=(9, 0))
         self.folder_sub = self._label(folder_names, size=9, color=DIM)
         self.folder_sub.pack(anchor="w", pady=(3, 0))
-        entry_border = tk.Frame(controls, bg=BORDER, height=59)
-        entry_border.pack(side="left", fill="x", expand=True, padx=(0, 10))
-        entry_border.pack_propagate(False)
-        self.folder_input = tk.Entry(entry_border, textvariable=self.folder,
+        entry_panel = RoundedPanel(controls, surface=FIELD, height=59,
+                                   radius=13, inset=8)
+        entry_panel.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.folder_input = tk.Entry(entry_panel.body, textvariable=self.folder,
                                      bg=FIELD, fg=FG, insertbackground=FG,
                                      font=("Segoe UI", 10), relief="flat",
                                      highlightthickness=0, borderwidth=0)
-        self.folder_input.pack(fill="both", expand=True, padx=1, pady=1, ipadx=14)
+        self.folder_input.pack(fill="both", expand=True, padx=8, pady=1)
         self.browse_button = ActionButton(controls, self._browse, width=106)
         self.browse_button.pack(side="left", fill="y", padx=(0, 9))
         self.scan_button = ActionButton(controls, self._start_scan, primary=True, width=143)
@@ -269,11 +366,12 @@ class FileDNAApp(tk.Tk):
              ("copies", "▣", AMBER), ("space", "◫", GREEN))
         ):
             cards.grid_columnconfigure(index, weight=1, uniform="metric")
-            outline = tk.Frame(cards, bg=BORDER, height=125)
+            outline = RoundedPanel(cards, surface=PANEL, radius=16,
+                                   inset=8, height=132)
             outline.grid(row=0, column=index, sticky="nsew",
                          padx=(0 if index == 0 else 5, 0 if index == 3 else 5))
-            body = tk.Frame(outline, bg=PANEL, padx=18, pady=13)
-            body.pack(fill="both", expand=True, padx=1, pady=1)
+            body = outline.body
+            body.configure(padx=10, pady=5)
             upper = tk.Frame(body, bg=PANEL)
             upper.pack(fill="x")
             self._label(upper, icon, color=tint, size=22, bg=PANEL).pack(side="left", padx=(0, 12))
@@ -302,10 +400,10 @@ class FileDNAApp(tk.Tk):
         self.export_button.enable(False)
         self.open_button.enable(False)
 
-        table_border = tk.Frame(root, bg=BORDER)
+        table_border = RoundedPanel(root, surface=PANEL, radius=17,
+                                    inset=8, height=190)
         table_border.pack(fill="both", expand=True, pady=(0, 15))
-        table_container = tk.Frame(table_border, bg=PANEL)
-        table_container.pack(fill="both", expand=True, padx=1, pady=1)
+        table_container = table_border.body
         self.tree = ttk.Treeview(table_container, columns=("size", "count", "hash"),
                                  show="tree headings", height=6, style="DNA.Treeview")
         self.tree.column("#0", width=500, minwidth=220, stretch=True)
@@ -317,7 +415,7 @@ class FileDNAApp(tk.Tk):
         self.tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side="right", fill="y")
         self.tree.pack(side="left", fill="both", expand=True)
-        self.tree.tag_configure("group", foreground=GREEN)
+        self.tree.tag_configure("group", foreground=ACCENT)
         self.tree.bind("<<TreeviewSelect>>", self._on_selection)
         self.tree.bind("<Double-1>", lambda _: self._open_selected())
         self.empty = tk.Frame(table_container, bg=PANEL, padx=15, pady=15)
@@ -329,11 +427,11 @@ class FileDNAApp(tk.Tk):
         self.empty.place(relx=.50, rely=.55, anchor="center")
         self.empty.lift()
 
-        status_border = tk.Frame(root, bg=BORDER, height=65)
+        status_border = RoundedPanel(root, surface=PANEL, radius=15,
+                                     inset=6, height=66)
         status_border.pack(fill="x", pady=(0, 10))
-        status_border.pack_propagate(False)
-        status = tk.Frame(status_border, bg=PANEL, padx=15, pady=10)
-        status.pack(fill="both", expand=True, padx=1, pady=1)
+        status = status_border.body
+        status.configure(padx=10, pady=4)
         self._label(status, "◷", size=23, color=ACCENT, bg=PANEL).pack(side="left", padx=(0, 12))
         status_labels = tk.Frame(status, bg=PANEL, width=206, height=42)
         status_labels.pack(side="left")
@@ -499,10 +597,10 @@ class FileDNAApp(tk.Tk):
     def _draw_progress(self):
         self.progress.delete("all")
         width, height = max(1, self.progress.winfo_width()), max(1, self.progress.winfo_height())
-        self.progress.create_rectangle(0, 0, width, height, fill=FIELD, outline="")
+        _rounded_shape(self.progress, 0, 0, width, height, height / 2, FIELD)
         if self._fraction:
-            self.progress.create_rectangle(0, 0, round(width * self._fraction),
-                                           height, fill=ACCENT, outline="")
+            filled = min(width, max(height, round(width * self._fraction)))
+            _rounded_shape(self.progress, 0, 0, filled, height, height / 2, ACCENT)
 
     def _finish(self, state):
         self._state = state

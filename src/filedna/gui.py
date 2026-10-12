@@ -172,7 +172,7 @@ class FileDNAApp(tk.Tk):
             opened = False
         if not opened:
             messagebox.showwarning("Bağlantı açılamadı",
-                                   f"Bu adresi tarayıcınıza yapıştırabilirsiniz:\\n{url}")
+                                   f"Bu adresi tarayıcınıza yapıştırabilirsiniz:\n{url}")
 
     def _browse(self) -> None:
         folder = filedialog.askdirectory(title="Taranacak klasörü seçin", mustexist=True)

@@ -1,27 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-label="FileDNA icon">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256"
+ role="img" aria-label="FileDNA icon - amber documents and DNA magnifier">
   <defs>
-    <linearGradient id="page" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#294d70"/>
-      <stop offset="100%" stop-color="#142943"/>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#3b2b1b"/><stop offset="1" stop-color="#191715"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2=".8" y2="1">
+      <stop stop-color="#ffe09b"/><stop offset=".45" stop-color="#f4b13f"/>
+      <stop offset="1" stop-color="#95611f"/>
     </linearGradient>
     <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#b8ddf1"/>
-      <stop offset="100%" stop-color="#408ac5"/>
+      <stop stop-color="#3a2a1e"/><stop offset="1" stop-color="#161616"/>
     </linearGradient>
   </defs>
-  <rect x="37" y="21" width="140" height="183" rx="20" fill="#264464" stroke="#5f7892" stroke-width="3"/>
-  <path d="M139 21v38h38" fill="#3e6587"/>
-  <rect x="70" y="51" width="139" height="175" rx="20" fill="url(#page)" stroke="#65a6de" stroke-width="4"/>
-  <path d="M174 51v35h35" fill="#34719e"/>
-  <g stroke="#5b81a5" stroke-linecap="round" stroke-width="6">
-    <path d="M93 92h61M93 110h81M93 128h61"/>
+  <rect x="35" y="19" width="139" height="184" rx="21" fill="url(#paper)"
+    stroke="#ac772d" stroke-width="4"/>
+  <path d="M136 20v39h38" fill="#b77c27" stroke="#f4b13f" stroke-width="2"/>
+  <rect x="67" y="49" width="140" height="174" rx="21" fill="#201c19"
+    stroke="url(#amber)" stroke-width="5"/>
+  <path d="M168 50v38h39" fill="#d99228" stroke="#ffce70" stroke-width="2"/>
+  <g stroke="#9d702f" stroke-width="7" stroke-linecap="round">
+    <path d="M91 92h58M91 109h82M91 126h58"/>
   </g>
-  <circle cx="151" cy="160" r="58" fill="#102034" stroke="url(#lens)" stroke-width="7"/>
-  <path d="M126 123c-22 24-9 52 11 71" fill="none" stroke="#4b97ed" stroke-linecap="round" stroke-width="9"/>
-  <path d="M176 123c22 24 9 52-11 71" fill="none" stroke="#72d0cc" stroke-linecap="round" stroke-width="9"/>
-  <g stroke="#c9e6f6" stroke-width="5" stroke-linecap="round">
-    <path d="M145 141h21M130 159h29M144 177h21"/>
+  <circle cx="150" cy="160" r="61" fill="#85541e" stroke="#f4b13f" stroke-width="5"/>
+  <circle cx="150" cy="160" r="53" fill="url(#lens)" stroke="#ffcc64" stroke-width="5"/>
+  <g fill="none" stroke-width="8" stroke-linecap="round">
+    <path d="M133 122C175 147 175 172 133 198" stroke="#ffe19b"/>
+    <path d="M167 122C125 147 125 172 167 198" stroke="#f4af38"/>
   </g>
-  <path d="M195 203l38 39" stroke="#102034" stroke-width="25" stroke-linecap="round"/>
-  <path d="M195 203l38 39" stroke="#a4cde9" stroke-width="13" stroke-linecap="round"/>
+  <g stroke="#d79636" stroke-width="5" stroke-linecap="round">
+    <path d="M136 139h28M130 160h40M136 181h28"/>
+  </g>
+  <path d="M193 204l39 39" stroke="#8c5b20" stroke-width="26"
+    stroke-linecap="round"/>
+  <path d="M193 204l39 39" stroke="#211b17" stroke-width="19"
+    stroke-linecap="round"/>
+  <path d="M196 207l33 33" stroke="#e7a440" stroke-width="3"
+    stroke-linecap="round"/>
 </svg>

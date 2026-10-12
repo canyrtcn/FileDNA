@@ -1,5 +1,7 @@
 # FileDNA
 
+![FileDNA icon](assets/filedna.svg)
+
 **Find duplicate files by content, not by filename.**
 
 FileDNA is a lightweight, read-only duplicate file finder for Windows with a clean desktop GUI and a scriptable CLI. It groups files by size first and only computes SHA-256 hashes for files that *could* be duplicates.
@@ -11,7 +13,8 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 - **Content-based detection:** different filenames, same bytes, same group.
 - **Efficient scanning:** checks file sizes first and hashes only candidates, in 1 MiB streaming chunks.
 - **Read-only operation:** never deletes, moves, renames, or modifies scanned files.
-- **Windows-friendly GUI:** background scanning, cancel action, result groups, progress, and JSON export.
+- **Windows-friendly GUI:** graphite dark theme, responsive cards, background scanning, cancellation, result groups, progress, and JSON export.
+- **English-first interface:** EN by default, optional Turkish (TR) toggle; the alternate language appears as a smaller helper label.
 - **CLI and machine-readable JSON:** useful for automation and later integration.
 - **Project identity:** the desktop footer displays the version and clickable links to [@canyrtcn](https://github.com/canyrtcn) and the [FileDNA repository](https://github.com/canyrtcn/FileDNA).
 - **Filesystem awareness:** skips symbolic links and does not treat additional hardlink names as new physical copies.
@@ -21,6 +24,8 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 ## Quick start
 
 **Run the GUI directly (no third-party Python dependencies):**
+
+The Python interface uses Tkinter; without an icon build, the application shows a simple built-in fallback icon. The Windows build generates the complete FileDNA icon automatically.
 
 ```powershell
 py -3 run.py
@@ -42,9 +47,22 @@ $env:PYTHONPATH = 'src'
 py -3 -m filedna "C:\Users\YourName\Downloads" --json report.json
 ```
 
+## Windows icon and standalone build
+
+The vector icon source is [`assets/filedna.svg`](assets/filedna.svg). The deterministic Pillow-based generator `scripts/make_icon.py` creates `assets/filedna.png` and multi-resolution `assets/filedna.ico`. `scripts/build.ps1` installs the *build-only* dependency Pillow, generates these assets, then bundles both into the PyInstaller executable (`--icon` and `--add-data`). No third-party GUI dependency is required when running the executable.
+
+Run on Windows:
+
+```powershell
+.\scripts\test.ps1
+.\scripts\build.ps1
+```
+
+Source-code tests can also be run with `python -m unittest discover -s tests -v`. GUI integration tests skip if no graphical display is available.
+
 ## About and links
 
-The application window title and footer display the current version from `src/filedna/__init__.py` (currently `0.1.0`). Two footer buttons open the [GitHub author profile](https://github.com/canyrtcn) and the [private source repository](https://github.com/canyrtcn/FileDNA) in the default browser. The repository link requires a GitHub account with access while the project remains private.
+The application window title and footer display the current version from `src/filedna/__init__.py` (currently `0.1.0`). Two footer links (including the visible username **@canyrtcn**) open the [GitHub author profile](https://github.com/canyrtcn) and the [private source repository](https://github.com/canyrtcn/FileDNA) in the default browser. The repository link requires a GitHub account with access while the project remains private.
 
 ## How it works
 
@@ -76,13 +94,15 @@ FileDNA/
 ├── tests/                    # unittest coverage
 ├── scripts/
 │   ├── test.ps1              # Windows testing script (for Hermes)
+│   ├── make_icon.py          # Generates PNG + ICO from vector-inspired geometry
 │   └── build.ps1             # Windows PyInstaller build (for Hermes)
+├── assets/filedna.svg       # Vector icon source
 └── pyproject.toml
 ```
 
 ## Testing & packaging (next stage: Hermes / Muse Spark)
 
-These commands are **documented, but not yet executed or verified in this handoff**:
+The core application was previously validated on Windows by Hermes / Muse Spark, but **the redesigned GUI, localization and new icon-enabled build still require a fresh Windows validation**. Do not reuse older EXE test results as proof for the new interface. Required:
 
 ```powershell
 .\scripts\test.ps1
@@ -101,6 +121,7 @@ Expected executable location once the build succeeds: `dist\FileDNA.exe`.
 - The GUI stays responsive during large scans.
 - JSON contains groups, SHA-256, warnings, and totals.
 - The Windows `.exe` launches without a console and can scan a sample directory.
+- The taskbar/title bar display the actual FileDNA ICO, English is selected by default, TR switches labels, and GitHub @canyrtcn / Repository links work.
 - Compare `report.json` output from Python and the GUI export.
 - Review permissions, UNC/network paths, long paths, and Unicode names.
 

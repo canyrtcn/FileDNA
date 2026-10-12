@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import __version__
 from .scanner import ScanCancelled, scan_directory
 
 
@@ -21,6 +22,7 @@ def format_size(size: int) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Find duplicate files without deleting anything.")
+    parser.add_argument("--version", action="version", version=f"FileDNA {__version__}")
     parser.add_argument("directory", help="Directory to scan recursively")
     parser.add_argument("--json", dest="json_path", metavar="FILE", help="Export the report to a JSON file")
     args = parser.parse_args(argv)

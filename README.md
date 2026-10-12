@@ -13,8 +13,9 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 - **Content-based detection:** different filenames, same bytes, same group.
 - **Efficient scanning:** checks file sizes first and hashes only candidates, in 1 MiB streaming chunks.
 - **Read-only operation:** never deletes, moves, renames, or modifies scanned files.
-- **Windows-friendly GUI:** graphite dark theme, responsive cards, background scanning, cancellation, result groups, progress, and JSON export.
+- **Windows-friendly GUI:** restrained graphite/amber theme with genuinely rounded Tk Canvas buttons, fields, metric cards, results panel and progress area; background scanning, cancellation, result groups and JSON export.
 - **English-first interface:** EN by default, optional Turkish (TR) toggle; the alternate language appears as a smaller helper label.
+- **Rounded UI:** native Tk Canvas-drawn shapes; no CustomTkinter or third-party GUI dependency. The results grid remains a native Treeview inside a rounded panel.
 - **CLI and machine-readable JSON:** useful for automation and later integration.
 - **Project identity:** the desktop footer displays the version and clickable links to [@canyrtcn](https://github.com/canyrtcn) and the [FileDNA repository](https://github.com/canyrtcn/FileDNA).
 - **Filesystem awareness:** skips symbolic links and does not treat additional hardlink names as new physical copies.
@@ -49,7 +50,7 @@ py -3 -m filedna "C:\Users\YourName\Downloads" --json report.json
 
 ## Windows icon and standalone build
 
-The vector icon source is [`assets/filedna.svg`](assets/filedna.svg). The deterministic Pillow-based generator `scripts/make_icon.py` creates `assets/filedna.png` and multi-resolution `assets/filedna.ico`. `scripts/build.ps1` installs the *build-only* dependency Pillow, generates these assets, then bundles both into the PyInstaller executable (`--icon` and `--add-data`). No third-party GUI dependency is required when running the executable.
+The amber vector icon source is [`assets/filedna.svg`](assets/filedna.svg). The deterministic Pillow-based generator `scripts/make_icon.py` creates matching amber `assets/filedna.png` and multi-resolution `assets/filedna.ico`. `scripts/build.ps1` installs the *build-only* dependency Pillow, generates these assets, then bundles both into the PyInstaller executable (`--icon` and `--add-data`). No third-party GUI dependency is required when running the executable.
 
 Run on Windows:
 
@@ -102,7 +103,7 @@ FileDNA/
 
 ## Testing & packaging (next stage: Hermes / Muse Spark)
 
-The core application was previously validated on Windows by Hermes / Muse Spark, but **the redesigned GUI, localization and new icon-enabled build still require a fresh Windows validation**. Do not reuse older EXE test results as proof for the new interface. Required:
+A prior two-language graphite/blue GUI passed Hermes / Muse Spark's Windows validation (31 tests with one OS-limited symlink skip, plus a GUI smoke test). **This later amber/rounded UI and regenerated icon require a NEW Windows validation and EXE build.** Old EXE hashes and visual results cannot verify these commits. Required:
 
 ```powershell
 .\scripts\test.ps1
@@ -121,7 +122,8 @@ Expected executable location once the build succeeds: `dist\FileDNA.exe`.
 - The GUI stays responsive during large scans.
 - JSON contains groups, SHA-256, warnings, and totals.
 - The Windows `.exe` launches without a console and can scan a sample directory.
-- The taskbar/title bar display the actual FileDNA ICO, English is selected by default, TR switches labels, and GitHub @canyrtcn / Repository links work.
+- The taskbar/title bar display the newly generated **amber** FileDNA ICO, English is selected by default, TR switches labels, and GitHub @canyrtcn / Repository links work.
+- Rounded buttons, controls, cards, table container and progress bar render without clipped labels at minimum size and Windows DPI 100%/125%; no unrounded blue legacy widgets remain.
 - Compare `report.json` output from Python and the GUI export.
 - Review permissions, UNC/network paths, long paths, and Unicode names.
 
@@ -141,4 +143,4 @@ MIT License. See [LICENSE](LICENSE). Packaging output, virtual environments, cac
 
 ## Repository
 
-Private GitHub repository: [`canyrtcn/FileDNA`](https://github.com/canyrtcn/FileDNA). For the Hermes / Muse Spark verification stage on Windows, clone the repository to `C:\Hermes_Win\AgentWorkspace\FileDNA` before running `scripts/test.ps1` and `scripts/build.ps1`. These scripts have **not** yet been verified on Windows.
+Private GitHub repository: [`canyrtcn/FileDNA`](https://github.com/canyrtcn/FileDNA). For the Hermes / Muse Spark verification stage on Windows, clone the repository to `C:\Hermes_Win\AgentWorkspace\FileDNA` before running `scripts/test.ps1` and `scripts/build.ps1`. Re-run these scripts after the amber redesign; a prior build validated the previous blue GUI only.

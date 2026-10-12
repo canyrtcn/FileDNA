@@ -13,6 +13,7 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 - **Read-only operation:** never deletes, moves, renames, or modifies scanned files.
 - **Windows-friendly GUI:** background scanning, cancel action, result groups, progress, and JSON export.
 - **CLI and machine-readable JSON:** useful for automation and later integration.
+- **Project identity:** the desktop footer displays the version and clickable links to [@canyrtcn](https://github.com/canyrtcn) and the [FileDNA repository](https://github.com/canyrtcn/FileDNA).
 - **Filesystem awareness:** skips symbolic links and does not treat additional hardlink names as new physical copies.
 - **Basic race protection:** rejects files that change during scanning or hashing.
 - **Transparent warnings:** unreadable files and folders are reported; scans with errors should not be treated as complete.
@@ -30,6 +31,7 @@ Or install the package in editable mode (requires setuptools):
 ```powershell
 py -3 -m pip install -e .
 filedna-gui
+filedna --version
 filedna "C:\Users\YourName\Downloads" --json report.json
 ```
 
@@ -39,6 +41,10 @@ filedna "C:\Users\YourName\Downloads" --json report.json
 $env:PYTHONPATH = 'src'
 py -3 -m filedna "C:\Users\YourName\Downloads" --json report.json
 ```
+
+## About and links
+
+The application window title and footer display the current version from `src/filedna/__init__.py` (currently `0.1.0`). Two footer buttons open the [GitHub author profile](https://github.com/canyrtcn) and the [private source repository](https://github.com/canyrtcn/FileDNA) in the default browser. The repository link requires a GitHub account with access while the project remains private.
 
 ## How it works
 
@@ -110,8 +116,8 @@ Expected executable location once the build succeeds: `dist\FileDNA.exe`.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+MIT License. See [LICENSE](LICENSE). Packaging output, virtual environments, caches and local reports are excluded using [.gitignore](.gitignore).
 
 ## Repository
 
-Private GitHub repository: `canyrtcn/FileDNA`. Test and EXE build are reserved for the Hermes / Muse Spark stage.
+Private GitHub repository: [`canyrtcn/FileDNA`](https://github.com/canyrtcn/FileDNA). For the Hermes / Muse Spark verification stage on Windows, clone the repository to `C:\Hermes_Win\AgentWorkspace\FileDNA` before running `scripts/test.ps1` and `scripts/build.ps1`. These scripts have **not** yet been verified on Windows.

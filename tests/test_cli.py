@@ -2,15 +2,25 @@
 
 from __future__ import annotations
 
+import io
 import json
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 
+from filedna import __version__
 from filedna.cli import format_size, main
 
 
 class CLITests(unittest.TestCase):
+    def test_version_without_directory(self) -> None:
+        output = io.StringIO()
+        with redirect_stdout(output), self.assertRaises(SystemExit) as exit_ctx:
+            main(["--version"])
+        self.assertEqual(exit_ctx.exception.code, 0)
+        self.assertIn(f"FileDNA {__version__}", output.getvalue())
+
     def test_byte_formatting(self) -> None:
         self.assertEqual(format_size(0), "0 B")
         self.assertEqual(format_size(1024), "1.00 KiB")

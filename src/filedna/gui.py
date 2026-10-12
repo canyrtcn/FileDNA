@@ -8,9 +8,11 @@ import subprocess
 import sys
 import threading
 import tkinter as tk
+import webbrowser
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
+from . import __version__
 from .cli import format_size
 from .scanner import ScanCancelled, ScanReport, scan_directory
 
@@ -23,12 +25,14 @@ MUTED = "#94a3b8"
 ACCENT = "#4c9cf6"
 ACCENT_HOVER = "#70b2ff"
 GREEN = "#4adea8"
+GITHUB_PROFILE_URL = "https://github.com/canyrtcn"
+GITHUB_REPOSITORY_URL = "https://github.com/canyrtcn/FileDNA"
 
 
 class FileDNAApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("FileDNA  |  Duplicate File Finder")
+        self.title(f"FileDNA v{__version__}  |  Duplicate File Finder")
         self.geometry("1050x725")
         self.minsize(780, 525)
         self.configure(bg=BG)
@@ -65,6 +69,10 @@ class FileDNAApp(tk.Tk):
         style.configure("Secondary.TButton", background=SURFACE_ALT, foreground=FG, borderwidth=0,
                         padding=(12, 9), font=("Segoe UI", 10))
         style.map("Secondary.TButton", background=[("active", LINE), ("disabled", SURFACE)])
+        style.configure("Link.TButton", background=BG, foreground=ACCENT, borderwidth=0,
+                        padding=(4, 2), font=("Segoe UI", 9))
+        style.map("Link.TButton", background=[("active", BG)],
+                  foreground=[("active", ACCENT_HOVER)])
         style.configure("Treeview", background=SURFACE, fieldbackground=SURFACE, foreground=FG,
                         borderwidth=0, rowheight=29, font=("Segoe UI", 10))
         style.configure("Treeview.Heading", background=SURFACE_ALT, foreground=MUTED,
@@ -147,8 +155,24 @@ class FileDNAApp(tk.Tk):
         self.progress = ttk.Progressbar(footer, mode="determinate", maximum=100)
         self.progress.pack(fill="x", pady=(0, 8))
         ttk.Label(footer, textvariable=self.status, style="Muted.TLabel").pack(anchor="w")
-        ttk.Label(main, text="GÜVENLİ MOD   •   FileDNA dosyaları taşımaz, değiştirmez veya silmez.",
-                  foreground=GREEN, font=("Segoe UI", 9)).pack(anchor="w", pady=(12, 0))
+        info_bar = ttk.Frame(main)
+        info_bar.pack(fill="x", pady=(12, 0))
+        ttk.Label(info_bar, text="GÜVENLİ MOD   •   FileDNA dosyaları değiştirmez veya silmez.",
+                  foreground=GREEN, font=("Segoe UI", 9)).pack(side="left")
+        ttk.Label(info_bar, text=f"v{__version__}", style="Muted.TLabel").pack(side="right", padx=(12, 0))
+        ttk.Button(info_bar, text="Repo ↗", style="Link.TButton",
+                   command=lambda: self._open_link(GITHUB_REPOSITORY_URL)).pack(side="right", padx=(8, 0))
+        ttk.Button(info_bar, text="GitHub · @canyrtcn ↗", style="Link.TButton",
+                   command=lambda: self._open_link(GITHUB_PROFILE_URL)).pack(side="right")
+
+    def _open_link(self, url: str) -> None:
+        try:
+            opened = webbrowser.open(url, new=2)
+        except Exception:
+            opened = False
+        if not opened:
+            messagebox.showwarning("Bağlantı açılamadı",
+                                   f"Bu adresi tarayıcınıza yapıştırabilirsiniz:\\n{url}")
 
     def _browse(self) -> None:
         folder = filedialog.askdirectory(title="Taranacak klasörü seçin", mustexist=True)

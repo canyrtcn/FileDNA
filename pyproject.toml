@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "filedna"
+version = "0.1.0"
+description = "Read-only duplicate file finder using SHA-256, with a Windows-friendly GUI and CLI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "canyrtcn" }]
+keywords = ["duplicates", "sha256", "file-management", "desktop", "tkinter"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows",
+  "Topic :: Utilities",
+]
+
+[project.scripts]
+filedna = "filedna.cli:main"
+filedna-gui = "filedna.gui:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

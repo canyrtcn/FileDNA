@@ -11,3 +11,17 @@ dist/
 Thumbs.db
 *.log
 *.tmp
+
+# Developer tooling and local-only data
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+coverage.xml
+htmlcov/
+.idea/
+.vscode/
+.env
+.env.*
+!.env.example
+filedna-report*.json

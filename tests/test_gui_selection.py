@@ -81,6 +81,25 @@ class SelectionIntegrationTests(unittest.TestCase):
         self.app._clear_selection()
         self.assertEqual(self.app.tree.selection(), ())
 
+    def test_filter_by_path_and_clear(self):
+        self.app.filter_text.set("b.txt")
+        self.assertEqual(len(self.app.tree.get_children()), 1)
+        self.assertEqual(len(self.app._row_paths), 3)  # entire matching group
+        self.app.filter_text.set("not-present")
+        self.assertFalse(self.app.tree.get_children())
+        self.assertEqual(self.app.empty_title["text"], "No matching groups")
+        self.app.filter_text.set("")
+        self.assertEqual(len(self.app._row_paths), 3)
+
+    def test_filter_preserves_safe_selection_scope(self):
+        self.app.filter_text.set("c.txt")
+        self.app._select_all_extras()
+        self.assertEqual(set(self.app._selected_paths()), set(self.paths[1:]))
+        self.app.set_language("TR")
+        self.assertEqual(self.app.filter_label["text"], "Filtre:")
+        self.assertIn("dosya", self.app.tree.item(
+            self.app.tree.get_children()[0], "text"))
+
     def test_context_menu_theme(self):
         menu = self.app._context_menu
         self.assertEqual(menu.cget("background"), FIELD)

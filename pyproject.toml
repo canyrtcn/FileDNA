@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "filedna"
 version = "0.1.0"
-description = "Read-only duplicate file finder using SHA-256, with a Windows-friendly GUI and CLI"
+description = "Duplicate file manager with read-only SHA-256 scanning and optional confirmed Recycle Bin cleanup"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["Send2Trash>=2.1,<3"]

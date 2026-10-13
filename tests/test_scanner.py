@@ -1,4 +1,4 @@
-"""Unit tests. Intentionally not executed before the Hermes/Muse test phase."""
+"""Read-only scanner behavior and duplicate-detection regression tests."""
 
 from __future__ import annotations
 

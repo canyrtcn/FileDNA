@@ -429,7 +429,15 @@ class FileDNAApp(tk.Tk):
         style.map("DNA.Treeview", background=[("selected", "#594020")],
                   foreground=[("selected", FG)])
         style.configure("DNA.Vertical.TScrollbar", background=FIELD,
-                        troughcolor=PANEL, arrowcolor=MUTED, borderwidth=0)
+                        troughcolor=PANEL, arrowcolor=MUTED, borderwidth=0,
+                        bordercolor=PANEL, lightcolor=FIELD, darkcolor=FIELD,
+                        relief="flat")
+        style.map("DNA.Vertical.TScrollbar",
+                  background=[("pressed", HIGHLIGHT), ("active", FIELD),
+                              ("!active", FIELD)],
+                  arrowcolor=[("pressed", FG), ("active", ACCENT),
+                              ("!active", MUTED)],
+                  troughcolor=[("active", PANEL), ("!active", PANEL)])
 
     def _layout(self):
         root = tk.Frame(self, bg=BG, padx=26, pady=20)

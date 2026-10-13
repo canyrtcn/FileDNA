@@ -401,7 +401,10 @@ class FileDNAApp(tk.Tk):
             tk.Label(header, image=self._icon_small, bg=BG).pack(side="left", padx=(0, 12))
         else:
             self._label(header, "◈", color=ACCENT, size=24).pack(side="left", padx=(0, 12))
-        self._label(header, "FileDNA", size=23, bold=True).pack(side="left")
+        brand = tk.Frame(header, bg=BG)
+        brand.pack(side="left")
+        self._label(brand, "File", size=23, bold=True).pack(side="left")
+        self._label(brand, "DNA", size=23, bold=True, color=ACCENT).pack(side="left")
         self._label(header, "│", color=BORDER, size=18).pack(side="left", padx=(13, 10))
         self.subtitle = self._label(header, size=11, color=MUTED)
         self.subtitle.pack(side="left")
@@ -412,6 +415,16 @@ class FileDNAApp(tk.Tk):
         self._label(switches, "  /  ", color=DIM).pack(side="left")
         self.tr = self._label(switches, "TR", color=DIM, bold=True, cursor="hand2")
         self.tr.pack(side="left")
+        self.help_button = tk.Canvas(header, bg=BG, bd=0,
+                                     highlightthickness=0, width=32, height=32,
+                                     cursor="hand2", takefocus=1)
+        self.help_button.pack(side="right", padx=(0, 20))
+        self.help_button.bind("<Button-1>", lambda _event: self._open_help())
+        self.help_button.bind("<Return>", lambda _event: self._open_help())
+        self.help_button.bind("<space>", lambda _event: self._open_help())
+        self.help_button.bind("<Enter>", lambda _event: self._paint_help_button(True))
+        self.help_button.bind("<Leave>", lambda _event: self._paint_help_button(False))
+        self._paint_help_button(False)
         self.en.bind("<Button-1>", lambda _: self.set_language("EN"))
         self.tr.bind("<Button-1>", lambda _: self.set_language("TR"))
         self.tagline = self._label(root, size=10, color=DIM)
@@ -573,6 +586,8 @@ class FileDNAApp(tk.Tk):
         self.tagline.configure(text=self._tr("hero"))
         self.en.configure(fg=ACCENT if self.language == "EN" else DIM)
         self.tr.configure(fg=ACCENT if self.language == "TR" else DIM)
+        if self._help_window is not None and self._help_window.winfo_exists():
+            self._refresh_help()
         self.folder_title.configure(text=self._both("folder")[0])
         self.folder_sub.configure(text=self._both("folder")[1])
         for button, key in ((self.browse_button, "browse"), (self.scan_button, "scan"),
@@ -596,6 +611,91 @@ class FileDNAApp(tk.Tk):
         self.footer_version.configure(text=f"FileDNA  v{__version__}  │  {self._tr('subtitle')}")
         self.safe.configure(text=self._tr("safe"))
         self.status_title.configure(text=self._tr(self._state))
+
+    def _paint_help_button(self, hovered: bool):
+        self.help_button.delete("all")
+        _rounded_shape(self.help_button, 1, 1, 31, 31, 15,
+                       HIGHLIGHT if hovered else FIELD, BORDER)
+        self.help_button.create_text(16, 16, text="?",
+                                     font=("Segoe UI Semibold", 13),
+                                     fill=HOVER if hovered else FG)
+
+    def _open_help(self):
+        if self._help_window is not None and self._help_window.winfo_exists():
+            self._help_window.lift()
+            self._help_window.focus_set()
+            return
+        dialog = tk.Toplevel(self)
+        self._help_window = dialog
+        dialog.withdraw()
+        dialog.title(self._tr("help_title"))
+        dialog.configure(bg=BG)
+        dialog.geometry("560x520")
+        dialog.minsize(485, 480)
+        dialog.transient(self)
+        dialog.protocol("WM_DELETE_WINDOW", self._dismiss_help)
+        container = tk.Frame(dialog, bg=BG, padx=28, pady=23)
+        container.pack(fill="both", expand=True)
+
+        self._help_heading = self._label(container, size=18, bold=True)
+        self._help_heading.pack(anchor="w")
+        self._help_intro = self._label(container, size=10, color=MUTED,
+                                       wraplength=480, justify="left")
+        self._help_intro.pack(anchor="w", pady=(4, 15))
+        self._help_text_widgets = []
+        for index in range(4):
+            row = tk.Frame(container, bg=BG)
+            row.pack(fill="x", pady=(0, 12))
+            self._label(row, f"{index + 1:02d}", color=ACCENT,
+                        bold=True, size=12).pack(side="left", anchor="n", padx=(0, 14))
+            body = tk.Frame(row, bg=BG)
+            body.pack(side="left", fill="x", expand=True)
+            heading = self._label(body, size=10, bold=True)
+            heading.pack(anchor="w")
+            detail = self._label(body, size=9, color=MUTED,
+                                 wraplength=422, justify="left")
+            detail.pack(anchor="w", pady=(2, 0))
+            self._help_text_widgets.append((heading, detail))
+
+        self._help_safety = self._label(container, size=9, color=AMBER,
+                                       wraplength=480, justify="left")
+        self._help_safety.pack(anchor="w", pady=(5, 10))
+        self._help_close_button = tk.Button(
+            container, command=self._dismiss_help,
+            bg=FIELD, fg=FG, activebackground=HIGHLIGHT,
+            activeforeground=FG, relief="flat", bd=0, padx=18, pady=9,
+            font=("Segoe UI Semibold", 10), cursor="hand2",
+        )
+        self._help_close_button.pack(anchor="e")
+        self._refresh_help()
+        dialog.deiconify()
+        dialog.lift()
+        dialog.focus_set()
+        dialog.after_idle(lambda: _apply_windows_caption(dialog)
+                          if dialog.winfo_exists() else None)
+
+    def _refresh_help(self):
+        dialog = self._help_window
+        if dialog is None or not dialog.winfo_exists():
+            return
+        dialog.title(self._tr("help_title"))
+        self._help_heading.configure(text=self._tr("help_title"))
+        self._help_intro.configure(text=self._tr("help_intro"))
+        for pair, (heading, detail) in zip(self._help_text_widgets,
+                                            HELP_STEPS[self.language]):
+            pair[0].configure(text=heading)
+            pair[1].configure(text=detail)
+        self._help_safety.configure(
+            text=f"{self._tr('help_privacy')} — {self._tr('help_privacy_text')}"
+        )
+        self._help_close_button.configure(text=self._tr("help_close"))
+
+    def _dismiss_help(self):
+        dialog = self._help_window
+        self._help_window = None
+        self._help_text_widgets = []
+        if dialog is not None and dialog.winfo_exists():
+            dialog.destroy()
 
     def _browse(self):
         chosen = filedialog.askdirectory(title=self._tr("folder"), mustexist=True)
@@ -652,6 +752,8 @@ class FileDNAApp(tk.Tk):
         self.stop_button.enable(False)
 
     def _poll(self):
+        if self._is_closing:
+            return
         try:
             while True:
                 event = self._queue.get_nowait()
@@ -762,7 +864,11 @@ class FileDNAApp(tk.Tk):
             self.status_detail.configure(text=f"{self._tr('saved')}: {destination}")
 
     def _close(self):
+        if self._is_closing:
+            return
+        self._is_closing = True
         self._stop_event.set()
+        self._dismiss_help()
         if self._after_id is not None:
             try:
                 self.after_cancel(self._after_id)

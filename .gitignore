@@ -25,3 +25,28 @@ htmlcov/
 .env.*
 !.env.example
 filedna-report*.json
+
+# Private credentials and machine-local configuration
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+.local/
+local/
+scratch/
+
+# Scans and diagnostic artifacts may reveal personal paths
+report.json
+reports/
+filedna-report*.json
+*-scan-report.json
+screenshots/
+*.trace
+*.har
+
+# Generated app icon bitmaps (SVG is the tracked source)
+assets/filedna.ico
+assets/filedna.png

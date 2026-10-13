@@ -62,6 +62,7 @@ WORDS = {
     "path": ("Group / file path", "Grup / dosya yolu"),
     "size": ("Size", "Boyut"),
     "count": ("Files", "Dosya"),
+    "files_in_group": ("files", "dosya"),
     "hash": ("SHA-256", "SHA-256"),
     "empty": ("No scan results yet", "Henüz tarama sonucu yok"),
     "empty_help": ("Choose a folder and start a scan to find matching files.",
@@ -611,6 +612,14 @@ class FileDNAApp(tk.Tk):
         self.footer_version.configure(text=f"FileDNA  v{__version__}  │  {self._tr('subtitle')}")
         self.safe.configure(text=self._tr("safe"))
         self.status_title.configure(text=self._tr(self._state))
+        if self._report is not None:
+            for index, item in enumerate(self.tree.get_children(), start=1):
+                count = len(self._report.groups[index - 1].paths)
+                self.tree.item(item, text=f"#{index} · {count} {self._tr('files_in_group')}")
+            if self._state == "finished":
+                self.status_detail.configure(
+                    text=f"{len(self._report.groups)} {self._tr('groups').lower()}"
+                )
 
     def _paint_help_button(self, hovered: bool):
         self.help_button.delete("all")
@@ -706,6 +715,12 @@ class FileDNAApp(tk.Tk):
         if root.is_symlink() or not root.is_dir():
             messagebox.showerror(self._tr("scan_error"), self._tr("invalid"))
             return
+        # Discard terminal events from the previous worker (if any).
+        while True:
+            try:
+                self._queue.get_nowait()
+            except queue.Empty:
+                break
         self._stop_event = threading.Event()
         self._report = None
         self._row_paths.clear()
@@ -755,6 +770,8 @@ class FileDNAApp(tk.Tk):
             while True:
                 event = self._queue.get_nowait()
                 if event[0] == "progress":
+                    if self._state == "stopping":
+                        continue
                     _, phase, n, total = event
                     self._state = "discovering" if phase == "discovering" else "hashing"
                     self.status_title.configure(text=self._tr(self._state))
@@ -802,7 +819,9 @@ class FileDNAApp(tk.Tk):
         for key, val in values.items():
             self.metrics[key][2].configure(text=f"{val:,}" if isinstance(val, int) else val)
         for idx, group in enumerate(report.groups, start=1):
-            parent = self.tree.insert("", "end", text=f"#{idx} · {len(group.paths)} files",
+            parent = self.tree.insert(
+                "", "end",
+                text=f"#{idx} · {len(group.paths)} {self._tr('files_in_group')}",
                                       values=(format_size(group.size_bytes), len(group.paths),
                                               group.sha256[:18] + "…"),
                                       tags=("group",), open=idx <= 4)

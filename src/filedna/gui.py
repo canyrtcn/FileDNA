@@ -64,6 +64,7 @@ WORDS = {
     "size": ("Size", "Boyut"),
     "count": ("Files", "Dosya"),
     "select_all": ("Select extra copies (Ctrl+A)", "Fazladan kopyaları seç (Ctrl+A)"),
+    "select_button": ("Select extras", "Fazla kopyaları seç"),
     "select_group": ("Select extras in group", "Gruptaki fazla kopyaları seç"),
     "clear_selection": ("Clear selection (Esc)", "Seçimi temizle (Esc)"),
     "copy_paths": ("Copy paths (Ctrl+C)", "Yolları kopyala (Ctrl+C)"),
@@ -655,7 +656,7 @@ class FileDNAApp(tk.Tk):
             self._refresh_help()
         self.folder_title.configure(text=self._both("folder")[0])
         self.folder_sub.configure(text=self._both("folder")[1])
-        self.select_button.set_text(*self._both("select_all"))
+        self.select_button.set_text(*self._both("select_button"))
         for button, key in ((self.browse_button, "browse"), (self.scan_button, "scan"),
                             (self.stop_button, "stop"), (self.open_button, "open"),
                             (self.export_button, "export")):

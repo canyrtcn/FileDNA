@@ -603,19 +603,19 @@ class FileDNAApp(tk.Tk):
         self.empty.place(relx=.50, rely=.55, anchor="center")
         self.empty.lift()
 
-        status_border = RoundedPanel(root, surface=PANEL, radius=15,
-                                     inset=6, height=66)
-        status_border.pack(fill="x", pady=(0, 10))
+        status_border = RoundedPanel(root, surface=PANEL, radius=11,
+                                     inset=5, height=48)
+        status_border.pack(fill="x", pady=(0, 7))
         status = status_border.body
-        status.configure(padx=10, pady=4)
-        self._label(status, "◷", size=23, color=ACCENT, bg=PANEL).pack(side="left", padx=(0, 12))
-        status_labels = tk.Frame(status, bg=PANEL, width=206, height=42)
+        status.configure(padx=9, pady=2)
+        self._label(status, "◷", size=17, color=ACCENT, bg=PANEL).pack(side="left", padx=(0, 8))
+        status_labels = tk.Frame(status, bg=PANEL, width=226, height=34)
         status_labels.pack(side="left")
         status_labels.pack_propagate(False)
-        self.status_title = self._label(status_labels, size=10, bold=True, bg=PANEL)
+        self.status_title = self._label(status_labels, size=9, bold=True, bg=PANEL)
         self.status_title.pack(anchor="w")
-        self.status_detail = self._label(status_labels, size=9, color=MUTED, bg=PANEL)
-        self.status_detail.pack(anchor="w", pady=(1, 0))
+        self.status_detail = self._label(status_labels, size=8, color=MUTED, bg=PANEL)
+        self.status_detail.pack(anchor="w", pady=(0, 0))
         self.elapsed_value = self._label(status, "—", size=10, color=MUTED, bg=PANEL)
         self.elapsed_value.pack(side="right", padx=(15, 4))
         self.elapsed_label = self._label(status, color=DIM, size=9, bg=PANEL)
@@ -624,7 +624,7 @@ class FileDNAApp(tk.Tk):
         self.percent.pack(side="right", padx=(14, 0))
         self.progress = tk.Canvas(status, height=7, bg=FIELD,
                                   highlightthickness=0, borderwidth=0)
-        self.progress.pack(side="left", fill="x", expand=True, padx=(10, 0), pady=(15, 0))
+        self.progress.pack(side="left", fill="x", expand=True, padx=(10, 0), pady=(9, 0))
         self.progress.bind("<Configure>", lambda _: self._draw_progress())
 
         footer = tk.Frame(root, bg=BG)

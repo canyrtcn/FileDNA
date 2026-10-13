@@ -87,6 +87,7 @@ WORDS = {
     "filter": ("Filter:", "Filtre:"),
     "filter_none": ("No matching groups", "Eşleşen grup yok"),
     "filter_help": ("Try another name or path fragment.", "Başka bir dosya adı veya yol parçası deneyin."),
+    "selected_status": ("{count} selected · {size}", "{count} seçili · {size}"),
 
     "files_in_group": ("files", "dosya"),
     "hash": ("SHA-256", "SHA-256"),
@@ -183,14 +184,14 @@ HELP_STEPS = {
     "EN": (
         ("Choose a folder", "Browse or paste a folder path. Subfolders are scanned too."),
         ("Start scan", "FileDNA groups files by size and compares SHA-256 checksums."),
-        ("Review matches", "Expand groups. Double-click a file to open its location."),
-        ("Export JSON", "Save a report; FileDNA does not delete any files."),
+        ("Filter & select", "Filter by path, Ctrl/Shift-click to select, Ctrl+A for extra copies."),
+        ("Review & act", "Open file location, copy paths or export JSON. Delete asks before recycling."),
     ),
     "TR": (
         ("Klasör seçin", "Gözat ile klasör seçin veya yolu yapıştırın. Alt klasörler de taranır."),
         ("Taramayı başlatın", "FileDNA önce boyutları, sonra SHA-256 özetlerini karşılaştırır."),
-        ("Eşleşmelere bakın", "Grupları açın. Dosyanın konumunu açmak için çift tıklayın."),
-        ("JSON raporu alın", "Raporu kaydedin; FileDNA hiçbir dosyayı silmez."),
+        ("Filtreleyin ve seçin", "Yola göre filtreleyin; Ctrl/Shift ile seçin, Ctrl+A fazla kopyaları seçer."),
+        ("İnceleyin ve işlem yapın", "Konum açın, yolları kopyalayın, JSON alın. Delete onaydan sonra taşır."),
     ),
 }
 
@@ -1103,6 +1104,18 @@ class FileDNAApp(tk.Tk):
         selected = self.tree.selection()
         self.open_button.enable(not self._cleanup_running and any(
             row in self._row_paths for row in selected))
+        if self._report is not None and self._state == "finished":
+            chosen = self._selected_paths()
+            if chosen:
+                group_sizes = {p: group.size_bytes for group in self._report.groups
+                               for p in group.paths}
+                amount = sum(group_sizes.get(p, 0) for p in chosen)
+                self.status_detail.configure(
+                    text=self._tr("selected_status").format(
+                        count=len(chosen), size=format_size(amount)))
+            else:
+                self.status_detail.configure(
+                    text=f"{len(self._report.groups)} {self._tr('groups').lower()}")
 
     def _open_selected(self):
         selected = self.tree.selection()

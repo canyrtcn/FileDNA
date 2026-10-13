@@ -1,4 +1,4 @@
-# Test stage: execute later from Hermes/Muse on Windows.
+# Run the FileDNA unit and GUI regression suite on Windows.
 $ErrorActionPreference = 'Stop'
 Set-Location (Resolve-Path (Join-Path $PSScriptRoot '..'))
 if (-not (Test-Path '.venv\Scripts\python.exe')) {

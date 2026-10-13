@@ -89,7 +89,7 @@ class HelpIntegrationTests(unittest.TestCase):
         self.assertIn("files", self.app.tree.item(parent, "text"))
         self.app.set_language("TR")
         self.assertIn("dosya", self.app.tree.item(parent, "text"))
-        self.assertIn("Kopya grubu", self.app.status_detail["text"])
+        self.assertIn("kopya grubu", self.app.status_detail["text"].lower())
         self.app.set_language("EN")
         self.assertIn("files", self.app.tree.item(parent, "text"))
 

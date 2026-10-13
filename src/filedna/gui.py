@@ -497,7 +497,7 @@ class FileDNAApp(tk.Tk):
         self.folder_title = self._label(folder_names, size=11, bold=True)
         self.folder_title.pack(anchor="w", pady=(9, 0))
         self.folder_sub = self._label(folder_names, size=9, color=DIM)
-        self.folder_sub.pack(anchor="w", pady=(3, 0))
+        # Secondary language remains in state, not rendered twice.
         entry_panel = RoundedPanel(controls, surface=FIELD, height=42,
                                    radius=10, inset=6)
         entry_panel.pack(side="left", fill="x", expand=True, padx=(0, 8))
@@ -554,6 +554,9 @@ class FileDNAApp(tk.Tk):
         )
         self.filter_entry.pack(side="left", ipady=4)
         self.filter_entry.bind("<Escape>", lambda _event: self.filter_text.set(""))
+        self.bind("<Control-f>", self._focus_filter)
+        self.bind("<F5>", self._scan_shortcut)
+        self.bind("<F1>", lambda _event: self._open_help())
         self.select_button = ActionButton(results_row, self._select_all_extras, width=114, height=38)
         self.select_button.pack(side="right", padx=(0, 0))
         self.export_button = ActionButton(results_row, self._export_json, width=90, height=38)
@@ -668,10 +671,10 @@ class FileDNAApp(tk.Tk):
             self._refresh_help()
         self.folder_title.configure(text=self._both("folder")[0])
         self.folder_sub.configure(text=self._both("folder")[1])
-        self.select_button.set_text(*self._both("select_button"))
+        self.select_button.set_text(*self._both("select_short"))
         for button, key in ((self.browse_button, "browse"), (self.scan_button, "scan"),
-                            (self.stop_button, "stop"), (self.open_button, "open"),
-                            (self.export_button, "export")):
+                            (self.stop_button, "stop"), (self.open_button, "open_short"),
+                            (self.export_button, "export_short")):
             button.set_text(*self._both(key))
         for key, (title, subtitle, _value) in self.metrics.items():
             main, alternative = self._both(key)
@@ -922,6 +925,16 @@ class FileDNAApp(tk.Tk):
         if report.errors:
             messagebox.showwarning(self._tr("partial"),
                                    self._tr("partial_help").format(count=len(report.errors)))
+
+    def _focus_filter(self, _event=None):
+        self.filter_entry.focus_set()
+        self.filter_entry.selection_range(0, "end")
+        return "break"
+
+    def _scan_shortcut(self, _event=None):
+        if self.scan_button.enabled:
+            self._start_scan()
+        return "break"
 
     def _on_filter_change(self, *_args):
         if self._report is not None and not self._cleanup_running:

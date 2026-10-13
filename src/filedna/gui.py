@@ -275,6 +275,7 @@ class ActionButton(tk.Canvas):
         self.primary = primary
         self.enabled = True
         self._hovered = False
+        self._focused = False
         self.surface = self
         self.main = tk.Label(
             self, bg=ACCENT if primary else FIELD,
@@ -300,11 +301,17 @@ class ActionButton(tk.Canvas):
         self.bind("<space>", lambda _e: self.click())
         self.bind("<Enter>", lambda _e: self.paint(True))
         self.bind("<Leave>", lambda _e: self.paint(False))
+        self.bind("<FocusIn>", lambda _e: self._set_focus(True))
+        self.bind("<FocusOut>", lambda _e: self._set_focus(False))
         for label in (self.main, self.small):
             label.bind("<Button-1>", lambda _e: self.click())
             label.bind("<Enter>", lambda _e: self.paint(True))
             label.bind("<Leave>", lambda _e: self.paint(False))
         self.paint(False)
+
+    def _set_focus(self, focused: bool):
+        self._focused = focused
+        self._redraw()
 
     def set_text(self, primary: str, secondary: str):
         self.main.configure(text=primary)
@@ -341,6 +348,7 @@ class ActionButton(tk.Canvas):
                 ACCENT if self.primary else
                 "#333029" if self._hovered else FIELD)
         _rounded_shape(self, 1, 1, w - 1, h - 1, 9, fill,
+                       HOVER if self._focused and self.enabled else
                        ACCENT if self.primary and self.enabled else BORDER)
         for item in set(self.find_all()) - old:
             self.addtag_withtag("button-background", item)

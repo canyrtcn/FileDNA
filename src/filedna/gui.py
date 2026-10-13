@@ -5,6 +5,7 @@ No file deletion or mutation functionality exists in this module.
 """
 from __future__ import annotations
 
+import ctypes
 import json
 import queue
 import subprocess
@@ -37,6 +38,10 @@ GREEN = "#8fc5a2"
 AMBER = "#e4a338"
 BUTTON_DISABLED = "#231f1b"
 DARK_INK = "#21170c"
+CAPTION_BG = BG
+CAPTION_TEXT = FG
+CARD_VALUE = "#fff6e7"
+HIGHLIGHT = "#6b4b23"
 
 # The first value is English, the second Turkish. Active language is the
 # large, primary label; the alternative remains a subtle secondary label.
@@ -84,6 +89,82 @@ WORDS = {
     "save_failed": ("Report could not be saved", "Rapor kaydedilemedi"),
     "saved": ("Report saved", "Rapor kaydedildi"),
     "link_error": ("Could not open link", "Bağlantı açılamadı"),
+    "help": ("Help", "Yardım"),
+    "help_title": ("How to use FileDNA", "FileDNA nasıl kullanılır?"),
+    "help_intro": ("Find exact copies without changing your original files.",
+                   "Orijinal dosyalarınızı değiştirmeden birebir kopyaları bulun."),
+    "help_close": ("Got it", "Anladım"),
+    "help_privacy": ("Private & read-only", "Gizli ve salt okunur"),
+    "help_privacy_text": ("Scans run locally. Files are never deleted, moved or uploaded. "
+                          "JSON reports may include full file paths; keep them private.",
+                          "Tarama yerel olarak yapılır. Dosyalar silinmez, taşınmaz veya "
+                          "yüklenmez. JSON raporları tam dosya yollarını içerir; gizli tutun."),
+}
+
+
+
+# DWM styling leaves standard Windows minimize, maximize and close controls intact.
+_DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+_DWMWA_CAPTION_COLOR = 35
+_DWMWA_TEXT_COLOR = 36
+
+
+def _colorref(value: str) -> int:
+    """Convert #RRGGBB to Windows 0x00BBGGRR."""
+    value = value.removeprefix("#")
+    if len(value) != 6:
+        raise ValueError("Expected six-digit RGB color")
+    red, green, blue = (int(value[i:i + 2], 16) for i in (0, 2, 4))
+    return red | (green << 8) | (blue << 16)
+
+
+def _apply_windows_caption(window) -> bool:
+    """Best effort: color title bar where supported; no frameless workaround."""
+    if sys.platform != "win32":
+        return False
+    try:
+        parent_fn = ctypes.windll.user32.GetParent
+        parent_fn.argtypes = [ctypes.c_void_p]
+        parent_fn.restype = ctypes.c_void_p
+        widget_hwnd = int(window.winfo_id())
+        hwnd = parent_fn(ctypes.c_void_p(widget_hwnd)) or widget_hwnd
+        set_attribute = ctypes.windll.dwmapi.DwmSetWindowAttribute
+        set_attribute.argtypes = [ctypes.c_void_p, ctypes.c_uint,
+                                  ctypes.c_void_p, ctypes.c_uint]
+        set_attribute.restype = ctypes.c_long
+        target = ctypes.c_void_p(hwnd)
+        dark = ctypes.c_int(1)
+        hr = set_attribute(target, _DWMWA_USE_IMMERSIVE_DARK_MODE,
+                           ctypes.byref(dark), ctypes.sizeof(dark))
+        if hr != 0:
+            hr = set_attribute(target, 19, ctypes.byref(dark),
+                               ctypes.sizeof(dark))
+        caption_color = ctypes.c_int(_colorref(CAPTION_BG))
+        caption_text = ctypes.c_int(_colorref(CAPTION_TEXT))
+        caption_hr = set_attribute(target, _DWMWA_CAPTION_COLOR,
+                                   ctypes.byref(caption_color),
+                                   ctypes.sizeof(caption_color))
+        text_hr = set_attribute(target, _DWMWA_TEXT_COLOR,
+                                ctypes.byref(caption_text),
+                                ctypes.sizeof(caption_text))
+        return (caption_hr == 0 and text_hr == 0) or hr == 0
+    except (AttributeError, OSError, tk.TclError, ValueError):
+        return False
+
+
+HELP_STEPS = {
+    "EN": (
+        ("Choose a folder", "Browse or paste a folder path. Subfolders are scanned too."),
+        ("Start scan", "FileDNA groups files by size and compares SHA-256 checksums."),
+        ("Review matches", "Expand groups. Double-click a file to open its location."),
+        ("Export JSON", "Save a report; FileDNA does not delete any files."),
+    ),
+    "TR": (
+        ("Klasör seçin", "Gözat ile klasör seçin veya yolu yapıştırın. Alt klasörler de taranır."),
+        ("Taramayı başlatın", "FileDNA önce boyutları, sonra SHA-256 özetlerini karşılaştırır."),
+        ("Eşleşmelere bakın", "Grupları açın. Dosyanın konumunu açmak için çift tıklayın."),
+        ("JSON raporu alın", "Raporu kaydedin; FileDNA hiçbir dosyayı silmez."),
+    ),
 }
 
 
@@ -252,12 +333,16 @@ class FileDNAApp(tk.Tk):
         self._state = "ready"
         self._fraction = 0.0
         self._after_id: str | None = None
+        self._is_closing = False
+        self._help_window = None
+        self._help_text_widgets = []
         self._icon_full = None
         self._icon_small = None
         self._install_icon()
         self._style()
         self._layout()
         self._translate()
+        self.after_idle(lambda: _apply_windows_caption(self))
         self._after_id = self.after(90, self._poll)
         self.protocol("WM_DELETE_WINDOW", self._close)
 

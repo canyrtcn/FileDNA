@@ -1,4 +1,5 @@
 """Regression tests for FileDNA's bilingual help and native Windows title bar."""
+import gc
 import sys
 import tkinter as tk
 import unittest
@@ -7,6 +8,7 @@ from unittest.mock import patch
 from filedna.gui import (
     FileDNAApp, HELP_STEPS, _apply_windows_caption, _colorref
 )
+from filedna.scanner import DuplicateGroup, ScanReport
 
 
 class WindowsCaptionTests(unittest.TestCase):
@@ -33,6 +35,8 @@ class WindowsCaptionTests(unittest.TestCase):
             self.assertIsInstance(_apply_windows_caption(window), bool)
         finally:
             window.destroy()
+            del window
+            gc.collect()
 
 
 class HelpContentTests(unittest.TestCase):
@@ -54,6 +58,8 @@ class HelpIntegrationTests(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, "app"):
             self.app._close()
+            del self.app
+            gc.collect()
 
     def test_help_dialog_opens_reuses_and_switches_language(self):
         self.app._open_help()
@@ -70,6 +76,22 @@ class HelpIntegrationTests(unittest.TestCase):
         self.assertIn("JSON", self.app._help_safety["text"])
         self.app._dismiss_help()
         self.assertIsNone(self.app._help_window)
+
+    def test_group_labels_translate_after_completed_scan(self):
+        report = ScanReport(
+            root="test", scanned_at="2026-10-13T00:00:00+00:00",
+            examined_files=2,
+            groups=[DuplicateGroup(sha256="a" * 64, size_bytes=4,
+                                   paths=["first", "second"])]
+        )
+        self.app._show_result(report)
+        parent = self.app.tree.get_children()[0]
+        self.assertIn("files", self.app.tree.item(parent, "text"))
+        self.app.set_language("TR")
+        self.assertIn("dosya", self.app.tree.item(parent, "text"))
+        self.assertIn("Kopya grubu", self.app.status_detail["text"])
+        self.app.set_language("EN")
+        self.assertIn("files", self.app.tree.item(parent, "text"))
 
     def test_help_button_keyboard_focus_and_close_idempotency(self):
         self.assertIn(str(self.app.help_button.cget("takefocus")).lower(), ("1", "true"))

@@ -17,7 +17,8 @@ if (-not (Test-Path $icon)) { throw "Missing icon: $icon" }
 
 $pyArgs = @('-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile',
     '--windowed', '--name', 'FileDNA', '--paths', 'src',
-    '--icon', "$icon", '--add-data', ($assets + ';assets'), 'run.py')
+    '--icon', "$icon", '--collect-submodules', 'send2trash',
+    '--add-data', ($assets + ';assets'), 'run.py')
 & $python @pyArgs
 if ($LASTEXITCODE -ne 0) { throw 'PyInstaller build failed' }
 Write-Host "EXE generated: $(Join-Path (Get-Location) 'dist\FileDNA.exe')"

@@ -16,6 +16,8 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 - **Windows-friendly GUI:** restrained graphite/amber theme with genuinely rounded Tk Canvas buttons, fields, metric cards, results panel and progress area; background scanning, cancellation, result groups and JSON export.
 - **English-first interface:** EN by default, optional Turkish (TR) toggle; the alternate language appears as a smaller helper label.
 - **Rounded UI:** native Tk Canvas-drawn shapes; no CustomTkinter or third-party GUI dependency. The results grid remains a native Treeview inside a rounded panel.
+- **Native Windows dark title bar:** preserves standard minimize/maximize/close buttons while requesting a graphite caption/text color via DWM (`DWMWA_CAPTION_COLOR`, `DWMWA_TEXT_COLOR`) and immersive-dark fallback. Some Windows versions or themes may override it.
+- **In-app Help (`?`):** concise four-step EN/TR instructions, report privacy notes, keyboard accessible, and language-aware while open.
 - **CLI and machine-readable JSON:** useful for automation and later integration.
 - **Project identity:** the desktop footer displays the version and clickable links to [@canyrtcn](https://github.com/canyrtcn) and the [FileDNA repository](https://github.com/canyrtcn/FileDNA).
 - **Filesystem awareness:** skips symbolic links and does not treat additional hardlink names as new physical copies.
@@ -26,7 +28,7 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 
 **Run the GUI directly (no third-party Python dependencies):**
 
-The Python interface uses Tkinter; without an icon build, the application shows a simple built-in fallback icon. The Windows build generates the complete FileDNA icon automatically.
+The Python interface uses Tkinter; without an icon build, the application shows a simple built-in fallback icon. The native Windows title-bar treatment uses `ctypes` and falls back to OS defaults when DWM coloring is not supported. The Windows build generates the complete FileDNA icon automatically.
 
 ```powershell
 py -3 run.py
@@ -103,7 +105,7 @@ FileDNA/
 
 ## Testing & packaging (next stage: Hermes / Muse Spark)
 
-A prior two-language graphite/blue GUI passed Hermes / Muse Spark's Windows validation (31 tests with one OS-limited symlink skip, plus a GUI smoke test). **This later amber/rounded UI and regenerated icon require a NEW Windows validation and EXE build.** Old EXE hashes and visual results cannot verify these commits. Required:
+A previous amber/rounded build passed a Muse Spark validation report (39 passed, one OS-permission symlink skip). **The later dark-caption, bilingual Help, status/state and visual refinements require a NEW Windows validation and EXE build.** Previous screenshots or EXE hashes cannot verify the new code. Muse's earlier `Tcl_AsyncDelete` workaround was applied locally in test teardown; preserve these local changes until reconciled and rechecked. Required:
 
 ```powershell
 .\scripts\test.ps1
@@ -124,6 +126,9 @@ Expected executable location once the build succeeds: `dist\FileDNA.exe`.
 - The Windows `.exe` launches without a console and can scan a sample directory.
 - The taskbar/title bar display the newly generated **amber** FileDNA ICO, English is selected by default, TR switches labels, and GitHub @canyrtcn / Repository links work.
 - Rounded buttons, controls, cards, table container and progress bar render without clipped labels at minimum size and Windows DPI 100%/125%; no unrounded blue legacy widgets remain.
+- Windows 11 standard title bar visually matches the dark application (with functioning minimize/maximize/close). On unsupported systems it retains the OS title bar, without borderless emulation.
+- The `?` Help is reachable with mouse and keyboard, explains usage in EN/TR and closes cleanly. Open Help while switching language.
+- Repeat scans/cancellation do not reuse stale progress events; group labels update when switching EN/TR after results are present.
 - Compare `report.json` output from Python and the GUI export.
 - Review permissions, UNC/network paths, long paths, and Unicode names.
 

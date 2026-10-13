@@ -1,4 +1,5 @@
 """Regression tests for FileDNA's localized read-only desktop interface."""
+import gc
 import tempfile
 import time
 import tkinter as tk
@@ -34,6 +35,11 @@ class GuiIntegrationTests(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, "app"):
             self.app._close()
+            # Collect the destroyed root on the main thread: cyclic Tk
+            # wrappers left for a later GC could otherwise be finalized on a
+            # scanner worker thread, which aborts the interpreter.
+            del self.app
+            gc.collect()
 
     def test_english_default_turkish_toggle_and_version(self):
         self.assertEqual(self.app.language, "EN")

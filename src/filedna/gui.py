@@ -83,6 +83,8 @@ WORDS = {
     "recycle_result": ("Moved: {moved}; failed/skipped: {failed}. Results will be rescanned.",
                        "Taşınan: {moved}; başarısız/atlanan: {failed}. Sonuçlar tekrar taranacak."),
     "recycle_none": ("Select one or more file rows first.", "Önce bir veya daha fazla dosya satırı seçin."),
+    "keep_one": ("Whole-group recycling is blocked. Keep at least one verified copy.",
+                 "Grubun tamamının taşınması engellendi. Doğrulanmış en az bir kopya kalmalı."),
     "busy": ("Wait for the current operation to finish.", "Devam eden işlemin bitmesini bekleyin."),
     "filter": ("Filter:", "Filtre:"),
     "filter_none": ("No matching groups", "Eşleşen grup yok"),

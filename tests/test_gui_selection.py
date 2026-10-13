@@ -102,9 +102,10 @@ class SelectionIntegrationTests(unittest.TestCase):
 
     def test_context_menu_theme(self):
         menu = self.app._context_menu
-        self.assertEqual(menu.cget("background"), FIELD)
-        self.assertEqual(menu.cget("activebackground"), HIGHLIGHT)
-        self.assertEqual(menu.cget("foreground"), FG)
+        # Tk on Windows returns option objects; compare their string values.
+        self.assertEqual(str(menu.cget("background")), FIELD)
+        self.assertEqual(str(menu.cget("activebackground")), HIGHLIGHT)
+        self.assertEqual(str(menu.cget("foreground")), FG)
 
     def test_treeview_heading_hover_never_maps_white(self):
         from tkinter import ttk

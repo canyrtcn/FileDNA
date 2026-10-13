@@ -2,6 +2,7 @@
 
 Headless environments can run the palette checks; widget tests require a display.
 """
+import gc
 import tkinter as tk
 import unittest
 
@@ -35,6 +36,11 @@ class RoundedWidgetTests(unittest.TestCase):
     def tearDown(self):
         if hasattr(self, "app"):
             self.app._close()
+            # Collect the destroyed root on the main thread: cyclic Tk
+            # wrappers left for a later GC could otherwise be finalized on a
+            # scanner worker thread, which aborts the interpreter.
+            del self.app
+            gc.collect()
 
     def test_rounded_components_keep_existing_callbacks(self):
         self.assertIsInstance(self.app.scan_button, ActionButton)

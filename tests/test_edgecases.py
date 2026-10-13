@@ -1,4 +1,4 @@
-"""Edge-case tests for the Hermes / Muse Spark verification stage.
+"""Edge-case tests for the scanner and filesystem integration.
 
 Covers acceptance items not covered by test_scanner.py / test_cli.py:
 SHA-256 correctness, multi-chunk large files, Unicode/Turkish paths,

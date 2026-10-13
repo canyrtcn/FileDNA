@@ -535,46 +535,46 @@ class FileDNAApp(tk.Tk):
             self.metrics[key] = (title, secondary, value)
 
         results_row = tk.Frame(root, bg=BG)
-        results_row.pack(fill="x", pady=(0, 12))
+        results_row.pack(fill="x", pady=(0, 8))
         results_heading = tk.Frame(results_row, bg=BG)
         results_heading.pack(side="left")
-        self.results_title = self._label(results_heading, size=13, bold=True)
+        self.results_title = self._label(results_heading, size=12, bold=True)
         self.results_title.pack(anchor="w")
         self.results_sub = self._label(results_heading, size=9, color=MUTED)
-        self.results_sub.pack(anchor="w", pady=(3, 0))
+        # Localized subtitle remains available but does not consume another row.
         self.filter_box = tk.Frame(results_row, bg=BG)
-        self.filter_box.pack(side="left", padx=(18, 0), pady=(10, 0))
+        self.filter_box.pack(side="left", padx=(14, 0), pady=(3, 0))
         self.filter_label = self._label(self.filter_box, color=MUTED, size=9)
         self.filter_label.pack(side="left", padx=(0, 6))
         self.filter_entry = tk.Entry(
-            self.filter_box, textvariable=self.filter_text, width=19,
+            self.filter_box, textvariable=self.filter_text, width=16,
             bg=FIELD, fg=FG, insertbackground=ACCENT, relief="flat",
             highlightthickness=1, highlightcolor=BORDER,
             highlightbackground=BORDER, font=("Segoe UI", 9),
         )
-        self.filter_entry.pack(side="left", ipady=5)
+        self.filter_entry.pack(side="left", ipady=4)
         self.filter_entry.bind("<Escape>", lambda _event: self.filter_text.set(""))
-        self.select_button = ActionButton(results_row, self._select_all_extras, width=155)
-        self.select_button.pack(side="right", fill="y", padx=(0, 10))
-        self.export_button = ActionButton(results_row, self._export_json, width=142)
-        self.export_button.pack(side="right", fill="y")
-        self.open_button = ActionButton(results_row, self._open_selected, width=174)
-        self.open_button.pack(side="right", fill="y", padx=(0, 10))
+        self.select_button = ActionButton(results_row, self._select_all_extras, width=114, height=38)
+        self.select_button.pack(side="right", padx=(0, 0))
+        self.export_button = ActionButton(results_row, self._export_json, width=90, height=38)
+        self.export_button.pack(side="right", padx=(0, 7))
+        self.open_button = ActionButton(results_row, self._open_selected, width=118, height=38)
+        self.open_button.pack(side="right", padx=(0, 7))
         self.export_button.enable(False)
         self.open_button.enable(False)
         self.select_button.enable(False)
 
-        table_border = RoundedPanel(root, surface=PANEL, radius=17,
-                                    inset=8, height=190)
-        table_border.pack(fill="both", expand=True, pady=(0, 15))
+        table_border = RoundedPanel(root, surface=PANEL, radius=13,
+                                    inset=5, height=240)
+        table_border.pack(fill="both", expand=True, pady=(0, 8))
         table_container = table_border.body
         self.tree = ttk.Treeview(table_container, columns=("size", "count", "hash"),
                                  show="tree headings", height=6, selectmode="extended",
                                  style="DNA.Treeview")
-        self.tree.column("#0", width=500, minwidth=220, stretch=True)
-        self.tree.column("size", width=125, stretch=False, anchor="e")
-        self.tree.column("count", width=78, stretch=False, anchor="center")
-        self.tree.column("hash", width=170, stretch=False)
+        self.tree.column("#0", width=580, minwidth=220, stretch=True)
+        self.tree.column("size", width=108, stretch=False, anchor="e")
+        self.tree.column("count", width=66, stretch=False, anchor="center")
+        self.tree.column("hash", width=148, stretch=False)
         scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=self.tree.yview,
                                   style="DNA.Vertical.TScrollbar")
         self.tree.configure(yscrollcommand=scrollbar.set)
@@ -595,7 +595,7 @@ class FileDNAApp(tk.Tk):
             font=("Segoe UI", 10),
         )
         self.empty = tk.Frame(table_container, bg=PANEL, padx=15, pady=15)
-        self._label(self.empty, "⌕", size=48, color=DIM, bg=PANEL).pack()
+        self._label(self.empty, "⌕", size=28, color=DIM, bg=PANEL).pack()
         self.empty_title = self._label(self.empty, size=14, bold=True, bg=PANEL)
         self.empty_title.pack(pady=(1, 7))
         self.empty_help = self._label(self.empty, size=10, color=MUTED, bg=PANEL)

@@ -4,7 +4,7 @@
 
 **Find duplicate files by content, not by filename.**
 
-FileDNA is a lightweight, read-only duplicate file finder for Windows with a clean desktop GUI and a scriptable CLI. It groups files by size first and only computes SHA-256 hashes for files that *could* be duplicates.
+FileDNA is a lightweight duplicate-file manager for Windows with a clean desktop GUI and a scriptable CLI. Scanning is **read-only**: it groups by size and hashes with SHA-256 only where needed. Optionally, users can **explicitly select** verified copies and move them to the system Recycle Bin after a confirmation dialog (no permanent-delete fallback).
 
 > **Status:** v0.1.0 source candidate. Windows executable build and test execution are reserved for the separate Hermes / Muse Spark validation stage. This is **not yet a verified release**.
 
@@ -12,9 +12,11 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 
 - **Content-based detection:** different filenames, same bytes, same group.
 - **Efficient scanning:** checks file sizes first and hashes only candidates, in 1 MiB streaming chunks.
-- **Read-only operation:** never deletes, moves, renames, or modifies scanned files.
+- **Read-only scanning:** automatic detection never changes files. The optional Recycle Bin action is manual, confirm-first, and preserves at least one independently verified copy in every group.
 - **Windows-friendly GUI:** restrained graphite/amber theme with genuinely rounded Tk Canvas buttons, fields, metric cards, results panel and progress area; background scanning, cancellation, result groups and JSON export.
 - **English-first interface:** EN by default, optional Turkish (TR) toggle; the alternate language appears as a smaller helper label.
+- **Results workflow:** Ctrl/Shift multiselect, *Select extras* (Ctrl+A), right-click actions, select-by-group, copy file paths (Ctrl+C), case-insensitive filename/path filter, and single-file Explorer reveal.
+- **Safe optional cleanup:** Delete/right-click prompts before sending chosen paths to Recycle Bin using Send2Trash. Rejects selection of a whole group, checks for an unchanged matching survivor and a valid target, blocks symlinks/junction traversal, and re-scans after the operation. Partial failures are reported.
 - **Rounded UI:** native Tk Canvas-drawn shapes; no CustomTkinter or third-party GUI dependency. The results grid remains a native Treeview inside a rounded panel.
 - **Native Windows dark title bar:** preserves standard minimize/maximize/close buttons while requesting a graphite caption/text color via DWM (`DWMWA_CAPTION_COLOR`, `DWMWA_TEXT_COLOR`) and immersive-dark fallback. Some Windows versions or themes may override it.
 - **In-app Help (`?`):** concise four-step EN/TR instructions, report privacy notes, keyboard accessible, and language-aware while open.
@@ -26,7 +28,7 @@ FileDNA is a lightweight, read-only duplicate file finder for Windows with a cle
 
 ## Quick start
 
-**Run the GUI directly (no third-party Python dependencies):**
+**Run the GUI from a source checkout:** install dependencies with `py -3 -m pip install -e .` before launching. Send2Trash is the only runtime third-party dependency; the interface itself uses standard-library Tkinter.
 
 The Python interface uses Tkinter; without an icon build, the application shows a simple built-in fallback icon. The native Windows title-bar treatment uses `ctypes` and falls back to OS defaults when DWM coloring is not supported. The Windows build generates the complete FileDNA icon automatically.
 
@@ -52,7 +54,7 @@ py -3 -m filedna "C:\Users\YourName\Downloads" --json report.json
 
 ## Windows icon and standalone build
 
-The amber vector icon source is [`assets/filedna.svg`](assets/filedna.svg). The deterministic Pillow-based generator `scripts/make_icon.py` creates matching amber `assets/filedna.png` and multi-resolution `assets/filedna.ico`. `scripts/build.ps1` installs the *build-only* dependency Pillow, generates these assets, then bundles both into the PyInstaller executable (`--icon` and `--add-data`). No third-party GUI dependency is required when running the executable.
+The amber vector icon source is [`assets/filedna.svg`](assets/filedna.svg). The deterministic Pillow-based generator `scripts/make_icon.py` creates matching PNG and ICO assets. `scripts/build.ps1` installs Pillow and PyInstaller as build-only dependencies, bundles the icon assets and explicitly collects Send2Trash's platform modules. No separate Python installation is required to run the bundled executable.
 
 Run on Windows:
 
@@ -92,6 +94,7 @@ FileDNA/
 ├── src/filedna/
 │   ├── scanner.py            # Read-only duplicate-finding engine
 │   ├── gui.py                # Tkinter desktop application
+│   ├── cleanup.py            # Opt-in validated Recycle Bin cleanup
 │   ├── cli.py                # CLI + report export
 │   └── __main__.py           # python -m filedna
 ├── tests/                    # unittest coverage
@@ -105,7 +108,7 @@ FileDNA/
 
 ## Testing & packaging (next stage: Hermes / Muse Spark)
 
-A previous amber/rounded build passed a Muse Spark validation report (39 passed, one OS-permission symlink skip). **The later dark-caption, bilingual Help, status/state and visual refinements require a NEW Windows validation and EXE build.** Previous screenshots or EXE hashes cannot verify the new code. Muse's earlier `Tcl_AsyncDelete` workaround was applied locally in test teardown; preserve these local changes until reconciled and rechecked. Required:
+A previous amber/rounded build passed a Muse Spark validation report (39 passed, one OS-permission symlink skip). **The new selection, filter, native Treeview hover fix and user-confirmed Recycle Bin features require a NEW Windows validation and EXE build.** Previous screenshots or EXE hashes cannot verify the new code. Muse's earlier `Tcl_AsyncDelete` workaround was applied locally in test teardown; preserve these local changes until reconciled and rechecked. Required:
 
 ```powershell
 .\scripts\test.ps1
@@ -130,11 +133,28 @@ Expected executable location once the build succeeds: `dist\FileDNA.exe`.
 - The `?` Help is reachable with mouse and keyboard, explains usage in EN/TR and closes cleanly. Open Help while switching language.
 - Repeat scans/cancellation do not reuse stale progress events; group labels update when switching EN/TR after results are present.
 - Compare `report.json` output from Python and the GUI export.
+- Right-click selection, Ctrl/Shift range selection, Ctrl+A (keep one), Ctrl+C and Delete all work in EN and TR.
+- Test white hover/pressed heading behavior in Windows (including high contrast and inactive focus), dark context-menu colors and filter with all/no/multiple matches.
+- Test that clicking Cancel performs no cleanup, attempting to recycle all copies of any group is rejected, changed/symlinked files are skipped, and any real OS recycling is tested **only on disposable temporary fixtures**.
+- Confirm Send2Trash is bundled into `dist/FileDNA.exe` and the OS Recycle Bin receives test-only files rather than permanently deleting them.
 - Review permissions, UNC/network paths, long paths, and Unicode names.
+
+## Selecting and optionally recycling duplicates
+
+1. Scan a folder. Select one or several file rows with Ctrl-click or Shift-click.
+2. Use **Select extras / Ctrl+A** to select all but one copy in every **visible** matching group (use the filter field to narrow the groups).
+3. Right-click to copy paths, select group extras, open file location, clear selection or choose **Move selected to Recycle Bin**. Pressing **Delete** offers the same recycle action.
+4. Review the total file count/size in the warning and confirm. **No action occurs when you decline.**
+5. FileDNA independently verifies an unselected matching survivor in each group and validates selected file contents before trying to recycle them. Unsupported recycle destinations return errors; the app never switches to permanent deletion.
+6. When cleanup finishes, review moved/failed counts and the refreshed scan results. No files from the user's folder are recycled during automated tests (use mocks and isolated test fixtures).
 
 ## Limitations and safety
 
-- **No cleanup action is offered.** Results are advisory; deleting duplicates safely is a separate problem.
+- **Automatic scanning is read-only.** Manual cleanup is explicitly opt-in and only moves user-confirmed selected files to the OS Recycle Bin. There is no permanent-delete option.
+- The app protects at least one copy **per duplicate group**, but cannot guarantee atomic safety against files changing between final verification and OS recycling. Keep separate backups of important files.
+- The first path in each group is used as the default retained copy for bulk selection; this is not necessarily the most valuable or newest original. Review selections carefully.
+- Some drives, UNC shares and removable media cannot support recoverable recycling. Cleanup must fail and disclose the error instead of deleting permanently.
+- Directly using Ctrl/Shift can include reference copies in the selection, but attempting to move *all* files of one group is rejected.
 - A successful SHA-256 match is extremely strong evidence of identical content, but the tool does not perform an additional byte-for-byte verification pass after hashing.
 - Files can be changing while a directory is being traversed. FileDNA performs basic stat checks, not a filesystem snapshot; race conditions remain possible.
 - Symbolic links are skipped. Hardlink aliases on the same device are skipped where inode information is available.

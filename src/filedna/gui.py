@@ -83,6 +83,9 @@ WORDS = {
                        "Taşınan: {moved}; başarısız/atlanan: {failed}. Sonuçlar tekrar taranacak."),
     "recycle_none": ("Select one or more file rows first.", "Önce bir veya daha fazla dosya satırı seçin."),
     "busy": ("Wait for the current operation to finish.", "Devam eden işlemin bitmesini bekleyin."),
+    "filter": ("Filter:", "Filtre:"),
+    "filter_none": ("No matching groups", "Eşleşen grup yok"),
+    "filter_help": ("Try another name or path fragment.", "Başka bir dosya adı veya yol parçası deneyin."),
 
     "files_in_group": ("files", "dosya"),
     "hash": ("SHA-256", "SHA-256"),
@@ -352,6 +355,8 @@ class FileDNAApp(tk.Tk):
         self._worker: threading.Thread | None = None
         self._report: ScanReport | None = None
         self._row_paths: dict[str, str] = {}
+        self._group_row_indices: dict[str, int] = {}
+        self.filter_text = tk.StringVar(value="")
         self._cleanup_running = False
         self._cleanup_thread: threading.Thread | None = None
         self._started: float | None = None
@@ -366,6 +371,7 @@ class FileDNAApp(tk.Tk):
         self._install_icon()
         self._style()
         self._layout()
+        self.filter_text.trace_add("write", self._on_filter_change)
         self._translate()
         self.after_idle(lambda: _apply_windows_caption(self))
         self._after_id = self.after(90, self._poll)
@@ -523,6 +529,18 @@ class FileDNAApp(tk.Tk):
         self.results_title.pack(anchor="w")
         self.results_sub = self._label(results_heading, size=9, color=MUTED)
         self.results_sub.pack(anchor="w", pady=(3, 0))
+        self.filter_box = tk.Frame(results_row, bg=BG)
+        self.filter_box.pack(side="left", padx=(18, 0), pady=(10, 0))
+        self.filter_label = self._label(self.filter_box, color=MUTED, size=9)
+        self.filter_label.pack(side="left", padx=(0, 6))
+        self.filter_entry = tk.Entry(
+            self.filter_box, textvariable=self.filter_text, width=19,
+            bg=FIELD, fg=FG, insertbackground=ACCENT, relief="flat",
+            highlightthickness=1, highlightcolor=BORDER,
+            highlightbackground=BORDER, font=("Segoe UI", 9),
+        )
+        self.filter_entry.pack(side="left", ipady=5)
+        self.filter_entry.bind("<Escape>", lambda _event: self.filter_text.set(""))
         self.select_button = ActionButton(results_row, self._select_all_extras, width=155)
         self.select_button.pack(side="right", fill="y", padx=(0, 10))
         self.export_button = ActionButton(results_row, self._export_json, width=142)
@@ -648,11 +666,16 @@ class FileDNAApp(tk.Tk):
             subtitle.configure(text=alternative)
         self.results_title.configure(text=self._tr("results"))
         self.results_sub.configure(text=self._both("results")[1])
+        self.filter_label.configure(text=self._tr("filter"))
         for column, key in (("#0", "path"), ("size", "size"),
                             ("count", "count"), ("hash", "hash")):
             self.tree.heading(column, text=self._tr(key))
-        empty_key, help_key = ("none", "none_help") if (self._report is not None
-                                  and not self._report.groups) else ("empty", "empty_help")
+        if self._report is not None and self._report.groups and not self.tree.get_children():
+            empty_key, help_key = "filter_none", "filter_help"
+        elif self._report is not None and not self._report.groups:
+            empty_key, help_key = "none", "none_help"
+        else:
+            empty_key, help_key = "empty", "empty_help"
         self.empty_title.configure(text=self._tr(empty_key))
         self.empty_help.configure(text=self._tr(help_key))
         self.elapsed_label.configure(text=f"{self._tr('elapsed')}: ")
@@ -660,7 +683,10 @@ class FileDNAApp(tk.Tk):
         self.safe.configure(text=self._tr("safe"))
         self.status_title.configure(text=self._tr(self._state))
         if self._report is not None:
-            for index, item in enumerate(self.tree.get_children(), start=1):
+            for item in self.tree.get_children():
+                index = self._group_row_indices.get(item)
+                if index is None:
+                    continue
                 count = len(self._report.groups[index - 1].paths)
                 self.tree.item(item, text=f"#{index} · {count} {self._tr('files_in_group')}")
             if self._state == "finished":
@@ -771,6 +797,7 @@ class FileDNAApp(tk.Tk):
         self._stop_event = threading.Event()
         self._report = None
         self._row_paths.clear()
+        self._group_row_indices.clear()
         for item in self.tree.get_children():
             self.tree.delete(item)
         for _title, _subtitle, value in self.metrics.values():

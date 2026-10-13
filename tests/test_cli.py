@@ -1,4 +1,4 @@
-"""CLI tests. Intended for the Hermes/Muse verification stage."""
+"""Command-line interface and JSON report regression tests."""
 
 from __future__ import annotations
 

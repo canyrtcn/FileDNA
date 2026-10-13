@@ -897,21 +897,7 @@ class FileDNAApp(tk.Tk):
                   "copies": report.duplicate_files, "space": format_size(report.reclaimable_bytes)}
         for key, val in values.items():
             self.metrics[key][2].configure(text=f"{val:,}" if isinstance(val, int) else val)
-        for idx, group in enumerate(report.groups, start=1):
-            parent = self.tree.insert(
-                "", "end",
-                text=f"#{idx} · {len(group.paths)} {self._tr('files_in_group')}",
-                                      values=(format_size(group.size_bytes), len(group.paths),
-                                              group.sha256[:18] + "…"),
-                                      tags=("group",), open=idx <= 4)
-            for filename in group.paths:
-                row = self.tree.insert(parent, "end", text=filename,
-                                       values=(format_size(group.size_bytes), "", ""))
-                self._row_paths[row] = filename
-        if report.groups:
-            self.empty.place_forget()
-        else:
-            self.empty.place(relx=.50, rely=.55, anchor="center")
+        self._populate_results()
         self._fraction = 1.0
         self._draw_progress()
         self.percent.configure(text="100%")
@@ -923,6 +909,46 @@ class FileDNAApp(tk.Tk):
         if report.errors:
             messagebox.showwarning(self._tr("partial"),
                                    self._tr("partial_help").format(count=len(report.errors)))
+
+    def _on_filter_change(self, *_args):
+        if self._report is not None and not self._cleanup_running:
+            self._populate_results()
+            self._translate()
+
+    def _populate_results(self):
+        """Filter whole groups by path/name while keeping all copies visible."""
+        report = self._report
+        if report is None:
+            return
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+        self._row_paths.clear()
+        self._group_row_indices.clear()
+        query = self.filter_text.get().strip().casefold()
+        shown = 0
+        for idx, group in enumerate(report.groups, start=1):
+            if query and not any(query in path.casefold() for path in group.paths):
+                continue
+            parent = self.tree.insert(
+                "", "end",
+                text=f"#{idx} · {len(group.paths)} {self._tr('files_in_group')}",
+                values=(format_size(group.size_bytes), len(group.paths),
+                        group.sha256[:18] + "…"),
+                tags=("group",), open=shown < 4,
+            )
+            self._group_row_indices[parent] = idx
+            shown += 1
+            for filename in group.paths:
+                row = self.tree.insert(
+                    parent, "end", text=filename,
+                    values=(format_size(group.size_bytes), "", ""),
+                )
+                self._row_paths[row] = filename
+        if shown:
+            self.empty.place_forget()
+        else:
+            self.empty.place(relx=.50, rely=.55, anchor="center")
+        self._on_selection()
 
     def _selected_paths(self):
         """Only actual file rows, never Treeview group/header rows."""

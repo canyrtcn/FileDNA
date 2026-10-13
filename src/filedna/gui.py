@@ -751,7 +751,7 @@ class FileDNAApp(tk.Tk):
             self.folder.set(chosen)
 
     def _start_scan(self):
-        if self._worker is not None and self._worker.is_alive():
+        if self._cleanup_running or (self._worker is not None and self._worker.is_alive()):
             return
         root = Path(self.folder.get()).expanduser()
         if root.is_symlink() or not root.is_dir():
@@ -830,6 +830,10 @@ class FileDNAApp(tk.Tk):
                 elif event[0] == "error":
                     self._finish("failed")
                     messagebox.showerror(self._tr("scan_error"), event[1])
+                elif event[0] == "trash_result":
+                    self._finish_cleanup(root=event[1], result=event[2])
+                elif event[0] == "trash_error":
+                    self._finish_cleanup(error=event[1])
         except queue.Empty:
             pass
         if self._started is not None:
@@ -886,13 +890,161 @@ class FileDNAApp(tk.Tk):
             messagebox.showwarning(self._tr("partial"),
                                    self._tr("partial_help").format(count=len(report.errors)))
 
+    def _selected_paths(self):
+        """Only actual file rows, never Treeview group/header rows."""
+        return [self._row_paths[item] for item in self.tree.selection()
+                if item in self._row_paths]
+
+    def _select_all_extras(self, _event=None):
+        if self._report is None or self._cleanup_running:
+            return "break"
+        extra = set(select_extra_paths(self._report))
+        rows = [row for row, path in self._row_paths.items() if path in extra]
+        self.tree.selection_set(rows)
+        if rows:
+            self.tree.focus(rows[0])
+        return "break"
+
+    def _select_group_extras(self):
+        if self._report is None or self._cleanup_running:
+            return
+        item = getattr(self, "_context_row", "")
+        if not item:
+            return
+        group_row = self.tree.parent(item) or item
+        if not self.tree.exists(group_row):
+            return
+        children = self.tree.get_children(group_row)
+        if children:
+            self.tree.selection_set(children[1:])
+
+    def _clear_selection(self, _event=None):
+        self.tree.selection_remove(self.tree.selection())
+        return "break"
+
+    def _copy_selected_paths(self, _event=None):
+        chosen = self._selected_paths()
+        if chosen:
+            self.clipboard_clear()
+            self.clipboard_append("\n".join(chosen))
+        return "break"
+
+    def _show_context_menu(self, event):
+        item = self.tree.identify_row(event.y)
+        self._context_row = item
+        if item and item not in self.tree.selection():
+            self.tree.selection_set(item)
+            self.tree.focus(item)
+        menu = self._context_menu
+        menu.delete(0, "end")
+        menu.add_command(label=self._tr("select_all"),
+                         command=self._select_all_extras)
+        menu.add_command(label=self._tr("select_group"),
+                         command=self._select_group_extras,
+                         state="normal" if item else "disabled")
+        menu.add_command(label=self._tr("clear_selection"),
+                         command=self._clear_selection)
+        menu.add_separator()
+        menu.add_command(label=self._tr("copy_paths"),
+                         command=self._copy_selected_paths,
+                         state="normal" if self._selected_paths() else "disabled")
+        menu.add_command(label=self._tr("open"),
+                         command=self._open_selected,
+                         state="normal" if self._selected_paths() else "disabled")
+        menu.add_separator()
+        menu.add_command(label=self._tr("recycle"),
+                         command=self._recycle_selected,
+                         state="normal" if self._selected_paths() and
+                         self._report is not None and not self._cleanup_running
+                         else "disabled")
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+        return "break"
+
+    def _recycle_selected(self, _event=None):
+        if self._cleanup_running or (
+            self._worker is not None and self._worker.is_alive()
+        ):
+            messagebox.showwarning(self._tr("recycle_failed"), self._tr("busy"))
+            return "break"
+        if self._report is None:
+            return "break"
+        selected = self._selected_paths()
+        if not selected:
+            messagebox.showinfo(self._tr("recycle_failed"), self._tr("recycle_none"))
+            return "break"
+        try:
+            plan = make_plan(self._report, selected)
+        except UnsafeSelection as exc:
+            messagebox.showwarning(self._tr("recycle_failed"),
+                                   self._tr("keep_one") + "\n" + str(exc))
+            return "break"
+        message = self._tr("recycle_confirm").format(
+            count=len(plan.paths), size=format_size(plan.bytes_total)
+        )
+        if not messagebox.askyesno(self._tr("recycle_confirm_title"), message,
+                                   icon="warning", default="no"):
+            return "break"
+        self._cleanup_running = True
+        self._state = "recycle_progress"
+        self.status_title.configure(text=self._tr("recycle_progress"))
+        self.status_detail.configure(text=f"{len(plan.paths)} selected")
+        self.scan_button.enable(False)
+        self.browse_button.enable(False)
+        self.stop_button.enable(False)
+        self.open_button.enable(False)
+        self.export_button.enable(False)
+        self.folder_input.configure(state="disabled")
+        report = self._report
+        self._cleanup_thread = threading.Thread(
+            target=self._trash_worker, args=(report, plan), daemon=True
+        )
+        self._cleanup_thread.start()
+        return "break"
+
+    def _trash_worker(self, report, plan):
+        try:
+            result = move_to_trash(report, plan)
+            self._queue.put(("trash_result", report.root, result))
+        except Exception as exc:
+            self._queue.put(("trash_error", str(exc)))
+
+    def _finish_cleanup(self, error=None, root=None, result=None):
+        self._cleanup_running = False
+        self._state = "ready"
+        self.scan_button.enable(True)
+        self.browse_button.enable(True)
+        self.stop_button.enable(False)
+        self.export_button.enable(self._report is not None)
+        self.folder_input.configure(state="normal")
+        if error is not None:
+            self.status_title.configure(text=self._tr("recycle_failed"))
+            messagebox.showerror(self._tr("recycle_failed"), error)
+            return
+        text = self._tr("recycle_result").format(
+            moved=len(result.moved), failed=len(result.errors)
+        )
+        if result.errors:
+            details = "\n".join(f"{Path(p).name}: {msg}"
+                                for p, msg in list(result.errors.items())[:3])
+            messagebox.showwarning(self._tr("recycle_finished"),
+                                   text + "\n\n" + details)
+        else:
+            messagebox.showinfo(self._tr("recycle_finished"), text)
+        self.folder.set(root)
+        self._start_scan()
+
     def _on_selection(self, _event=None):
         selected = self.tree.selection()
-        self.open_button.enable(bool(selected and selected[0] in self._row_paths))
+        self.open_button.enable(not self._cleanup_running and any(
+            row in self._row_paths for row in selected))
 
     def _open_selected(self):
         selected = self.tree.selection()
-        filename = self._row_paths.get(selected[0]) if selected else None
+        filename = next((self._row_paths[row] for row in selected
+                         if row in self._row_paths), None)
         if not filename:
             return
         try:

@@ -78,6 +78,17 @@ def _verify_file(path: str, group: DuplicateGroup, root: Path) -> bool:
     if not _within_root(item, root) or item.is_symlink() or not item.is_file():
         return False
     try:
+        # Do not follow a parent symlink/junction even if it leads back inside
+        # the scanned root. This keeps deletion rooted to scanned real paths.
+        relative = item.absolute().relative_to(root.absolute())
+        parent = root.absolute()
+        for component in relative.parts[:-1]:
+            parent = parent / component
+            if parent.is_symlink() or getattr(parent, "is_junction", lambda: False)():
+                return False
+    except (OSError, ValueError):
+        return False
+    try:
         first = item.stat()
         if not stat.S_ISREG(first.st_mode) or first.st_size != group.size_bytes:
             return False
@@ -145,6 +156,8 @@ def move_to_trash(
         try:
             trash(filename)
             result.moved.append(filename)
-        except (OSError, ValueError, RuntimeError) as exc:
-            result.errors[filename] = str(exc)
+        except Exception as exc:
+            # Preserve partial progress and expose the failure; never fall back
+            # to direct delete even for unexpected platform/COM errors.
+            result.errors[filename] = f"{type(exc).__name__}: {exc}"
     return result

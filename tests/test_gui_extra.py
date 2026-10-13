@@ -81,7 +81,8 @@ class GuiExtraTests(unittest.TestCase):
                     texts.add(value)
             for key in ("subtitle", "hero", "folder", "browse", "scan", "stop",
                         "scanned", "groups", "copies", "space", "results",
-                        "open", "export", "empty", "empty_help", "ready", "safe"):
+                        "open_short", "export_short", "select_short",
+                        "empty", "empty_help", "ready", "safe"):
                 self.assertIn(WORDS[key][idx], texts, f"{code}:{key}")
             # Table headings (not separate widgets).
             for column, key in (("#0", "path"), ("size", "size"),

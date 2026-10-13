@@ -1002,6 +1002,7 @@ class FileDNAApp(tk.Tk):
         self.stop_button.enable(False)
         self.open_button.enable(False)
         self.export_button.enable(False)
+        self.select_button.enable(False)
         self.folder_input.configure(state="disabled")
         report = self._report
         self._cleanup_thread = threading.Thread(

@@ -660,13 +660,10 @@ class FileDNAApp(tk.Tk):
         self._help_safety = self._label(container, size=9, color=AMBER,
                                        wraplength=480, justify="left")
         self._help_safety.pack(anchor="w", pady=(5, 10))
-        self._help_close_button = tk.Button(
-            container, command=self._dismiss_help,
-            bg=FIELD, fg=FG, activebackground=HIGHLIGHT,
-            activeforeground=FG, relief="flat", bd=0, padx=18, pady=9,
-            font=("Segoe UI Semibold", 10), cursor="hand2",
+        self._help_close_button = ActionButton(
+            container, self._dismiss_help, primary=True, width=132
         )
-        self._help_close_button.pack(anchor="e")
+        self._help_close_button.pack(anchor="e", pady=(0, 4))
         self._refresh_help()
         dialog.deiconify()
         dialog.lift()
@@ -688,7 +685,7 @@ class FileDNAApp(tk.Tk):
         self._help_safety.configure(
             text=f"{self._tr('help_privacy')} — {self._tr('help_privacy_text')}"
         )
-        self._help_close_button.configure(text=self._tr("help_close"))
+        self._help_close_button.set_text(self._tr("help_close"), self._tr("help"))
 
     def _dismiss_help(self):
         dialog = self._help_window

@@ -19,6 +19,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from . import __version__
 from .cli import format_size
+from .cleanup import UnsafeSelection, make_plan, move_to_trash, select_extra_paths
 from .scanner import ScanCancelled, ScanReport, scan_directory
 
 GITHUB_PROFILE = "https://github.com/canyrtcn"
@@ -62,6 +63,26 @@ WORDS = {
     "path": ("Group / file path", "Grup / dosya yolu"),
     "size": ("Size", "Boyut"),
     "count": ("Files", "Dosya"),
+    "select_all": ("Select extra copies (Ctrl+A)", "Fazladan kopyaları seç (Ctrl+A)"),
+    "select_group": ("Select extras in group", "Gruptaki fazla kopyaları seç"),
+    "clear_selection": ("Clear selection (Esc)", "Seçimi temizle (Esc)"),
+    "copy_paths": ("Copy paths (Ctrl+C)", "Yolları kopyala (Ctrl+C)"),
+    "recycle": ("Move selected to Recycle Bin (Delete)", "Seçilenleri Geri Dönüşüm Kutusuna taşı (Delete)"),
+    "recycle_confirm_title": ("Confirm Recycle Bin cleanup", "Geri Dönüşüm Kutusu onayı"),
+    "recycle_confirm": ("Move {count} file(s), totaling {size}, to the Recycle Bin?\n"
+                        "One verified copy per group will be retained.\n"
+                        "There is NO permanent-delete fallback.",
+                        "{count} dosya ({size}) Geri Dönüşüm Kutusuna taşınsın mı?\n"
+                        "Her grupta doğrulanmış bir kopya kalacak.\n"
+                        "Kalıcı silme alternatifi YOK."),
+    "recycle_failed": ("Cleanup blocked", "Temizleme engellendi"),
+    "recycle_progress": ("Moving to Recycle Bin", "Geri Dönüşüm Kutusuna taşınıyor"),
+    "recycle_finished": ("Recycle Bin cleanup completed", "Geri Dönüşüm Kutusu temizliği tamamlandı"),
+    "recycle_result": ("Moved: {moved}; failed/skipped: {failed}. Results will be rescanned.",
+                       "Taşınan: {moved}; başarısız/atlanan: {failed}. Sonuçlar tekrar taranacak."),
+    "recycle_none": ("Select one or more file rows first.", "Önce bir veya daha fazla dosya satırı seçin."),
+    "busy": ("Wait for the current operation to finish.", "Devam eden işlemin bitmesini bekleyin."),
+
     "files_in_group": ("files", "dosya"),
     "hash": ("SHA-256", "SHA-256"),
     "empty": ("No scan results yet", "Henüz tarama sonucu yok"),
@@ -78,8 +99,8 @@ WORDS = {
     "failed": ("Scan failed", "Tarama başarısız"),
     "finished": ("Scan complete", "Tarama tamamlandı"),
     "elapsed": ("Elapsed", "Geçen süre"),
-    "safe": ("Read-only · Files are never deleted or modified",
-             "Salt okunur · Dosyalar silinmez veya değiştirilmez"),
+    "safe": ("Read-only scanning · Optional confirmed Recycle Bin cleanup",
+             "Salt okunur tarama · İsteğe bağlı onaylı Geri Dönüşüm Kutusu temizliği"),
     "invalid": ("Select an existing folder that is not a symbolic link.",
                 "Sembolik bağlantı olmayan mevcut bir klasör seçin."),
     "scan_error": ("Scan error", "Tarama hatası"),
@@ -95,11 +116,11 @@ WORDS = {
     "help_intro": ("Find exact copies without changing your original files.",
                    "Orijinal dosyalarınızı değiştirmeden birebir kopyaları bulun."),
     "help_close": ("Got it", "Anladım"),
-    "help_privacy": ("Private & read-only", "Gizli ve salt okunur"),
-    "help_privacy_text": ("Scans run locally. Files are never deleted, moved or uploaded. "
-                          "JSON reports may include full file paths; keep them private.",
-                          "Tarama yerel olarak yapılır. Dosyalar silinmez, taşınmaz veya "
-                          "yüklenmez. JSON raporları tam dosya yollarını içerir; gizli tutun."),
+    "help_privacy": ("Local scan and optional cleanup", "Yerel tarama ve isteğe bağlı temizleme"),
+    "help_privacy_text": ("Scanning changes no files. Only explicitly selected copies can be moved "
+                          "to the Recycle Bin after confirmation. JSON reports may include private paths.",
+                          "Tarama dosyaları değiştirmez. Yalnızca seçilen kopyalar onay sonrası "
+                          "Geri Dönüşüm Kutusuna taşınır. JSON raporları özel yolları içerebilir."),
 }
 
 
@@ -330,6 +351,8 @@ class FileDNAApp(tk.Tk):
         self._worker: threading.Thread | None = None
         self._report: ScanReport | None = None
         self._row_paths: dict[str, str] = {}
+        self._cleanup_running = False
+        self._cleanup_thread: threading.Thread | None = None
         self._started: float | None = None
         self._state = "ready"
         self._fraction = 0.0

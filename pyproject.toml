@@ -8,6 +8,7 @@ version = "0.1.0"
 description = "Read-only duplicate file finder using SHA-256, with a Windows-friendly GUI and CLI"
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = ["Send2Trash>=2.1,<3"]
 license = { text = "MIT" }
 authors = [{ name = "canyrtcn" }]
 keywords = ["duplicates", "sha256", "file-management", "desktop", "tkinter"]

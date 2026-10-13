@@ -517,28 +517,21 @@ class FileDNAApp(tk.Tk):
         cards = tk.Frame(root, bg=BG)
         cards.pack(fill="x", pady=(0, 13))
         self.metrics = {}
-        for index, (key, icon, tint) in enumerate(
-            (("scanned", "▤", MUTED), ("groups", "≡", ACCENT),
-             ("copies", "▣", AMBER), ("space", "◫", GREEN))
-        ):
+        # Dense summary ribbon: file results remain the primary work surface.
+        for index, key in enumerate(("scanned", "groups", "copies", "space")):
             cards.grid_columnconfigure(index, weight=1, uniform="metric")
-            outline = RoundedPanel(cards, surface=PANEL, radius=16,
-                                   inset=8, height=132)
-            outline.grid(row=0, column=index, sticky="nsew",
-                         padx=(0 if index == 0 else 5, 0 if index == 3 else 5))
-            body = outline.body
-            body.configure(padx=10, pady=5)
-            upper = tk.Frame(body, bg=PANEL)
-            upper.pack(fill="x")
-            self._label(upper, icon, color=tint, size=22, bg=PANEL).pack(side="left", padx=(0, 12))
-            labels = tk.Frame(upper, bg=PANEL)
-            labels.pack(side="left")
-            title = self._label(labels, size=10, bold=True, bg=PANEL)
+            panel = RoundedPanel(cards, surface=PANEL, radius=12,
+                                 inset=6, height=82)
+            panel.grid(row=0, column=index, sticky="nsew",
+                       padx=(0 if index == 0 else 5, 0 if index == 3 else 5))
+            body = panel.body
+            body.configure(padx=11, pady=5)
+            title = self._label(body, size=9, color=MUTED, bg=PANEL)
             title.pack(anchor="w")
-            secondary = self._label(labels, size=9, color=MUTED, bg=PANEL)
-            secondary.pack(anchor="w", pady=(2, 0))
-            value = self._label(body, "0", size=20, bold=True, bg=PANEL)
-            value.pack(anchor="w", pady=(8, 0))
+            secondary = self._label(body, size=9, color=DIM, bg=PANEL)
+            value = self._label(body, "0", size=19, bold=True,
+                                color=CARD_VALUE, bg=PANEL)
+            value.pack(anchor="w", pady=(3, 0))
             self.metrics[key] = (title, secondary, value)
 
         results_row = tk.Frame(root, bg=BG)

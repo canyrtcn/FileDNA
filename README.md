@@ -13,9 +13,9 @@ FileDNA is a lightweight duplicate-file manager for Windows with a clean desktop
 - **Content-based detection:** different filenames, same bytes, same group.
 - **Efficient scanning:** checks file sizes first and hashes only candidates, in 1 MiB streaming chunks.
 - **Read-only scanning:** automatic detection never changes files. The optional Recycle Bin action is manual, confirm-first, and preserves at least one independently verified copy in every group.
-- **Windows-friendly GUI:** restrained graphite/amber theme with genuinely rounded Tk Canvas buttons, fields, metric cards, results panel and progress area; background scanning, cancellation, result groups and JSON export.
-- **English-first interface:** EN by default, optional Turkish (TR) toggle; the alternate language appears as a smaller helper label.
-- **Results workflow:** Ctrl/Shift multiselect, *Select extras* (Ctrl+A), right-click actions, select-by-group, copy file paths (Ctrl+C), case-insensitive filename/path filter, and single-file Explorer reveal.
+- **Results-first desktop UI:** neutral graphite + restrained amber, compact single-line controls and a short four-metric ribbon give the resizable duplicate-results table substantially more room. Rounded Tk Canvas components preserve keyboard interaction, scanning/cancellation, groups and JSON export.
+- **English-first interface:** EN by default with an instant TR toggle. Compact controls display only the active language to avoid repetitive stacked labels; the text dictionary retains both translations.
+- **Results workflow:** Ctrl/Shift multiselect, *Select extras* (Ctrl+A), right-click actions, select-by-group, copy paths (Ctrl+C), case-insensitive filename/path filter (Ctrl+F), refresh scan (F5), Help (F1), and Explorer reveal.
 - **Safe optional cleanup:** Delete/right-click prompts before sending chosen paths to Recycle Bin using Send2Trash. Rejects selection of a whole group, checks for an unchanged matching survivor and a valid target, blocks symlinks/junction traversal, and re-scans after the operation. Partial failures are reported.
 - **Rounded UI:** native Tk Canvas-drawn shapes; no CustomTkinter or third-party GUI dependency. The results grid remains a native Treeview inside a rounded panel.
 - **Native Windows dark title bar:** preserves standard minimize/maximize/close buttons while requesting a graphite caption/text color via DWM (`DWMWA_CAPTION_COLOR`, `DWMWA_TEXT_COLOR`) and immersive-dark fallback. Some Windows versions or themes may override it.
@@ -108,7 +108,7 @@ FileDNA/
 
 ## Testing & packaging (next stage: Hermes / Muse Spark)
 
-A previous amber/rounded build passed a Muse Spark validation report (39 passed, one OS-permission symlink skip). **The new selection, filter, native Treeview hover fix and user-confirmed Recycle Bin features require a NEW Windows validation and EXE build.** Previous screenshots or EXE hashes cannot verify the new code. Muse's earlier `Tcl_AsyncDelete` workaround was applied locally in test teardown; preserve these local changes until reconciled and rechecked. Required:
+A previous amber/rounded build passed a Muse Spark validation report (39 passed, one OS-permission symlink skip). **Muse reported 70 PASS / 2 SKIP before the latest compact-layout changes, which now require a NEW Windows GUI validation and EXE build.** Previous screenshots or EXE hashes cannot verify the new code. Muse's earlier `Tcl_AsyncDelete` workaround was applied locally in test teardown; preserve these local changes until reconciled and rechecked. Required:
 
 ```powershell
 .\scripts\test.ps1
@@ -128,7 +128,8 @@ Expected executable location once the build succeeds: `dist\FileDNA.exe`.
 - JSON contains groups, SHA-256, warnings, and totals.
 - The Windows `.exe` launches without a console and can scan a sample directory.
 - The taskbar/title bar display the newly generated **amber** FileDNA ICO, English is selected by default, TR switches labels, and GitHub @canyrtcn / Repository links work.
-- Rounded buttons, controls, cards, table container and progress bar render without clipped labels at minimum size and Windows DPI 100%/125%; no unrounded blue legacy widgets remain.
+- Compact rounded buttons, 82px summary panels, 42px folder field, 48px status strip and larger result table render without clipping at 950×660 and common desktop sizes; confirm Windows DPI 100%/125%. No white hover states or blue UI fragments should remain.
+- The single-line English/Turkish toolbar buttons display the correct active language. F1, F5, Ctrl+F, Ctrl+A, Ctrl+C, Shift/Ctrl selection and Delete remain usable with keyboard focus visible.
 - Windows 11 standard title bar visually matches the dark application (with functioning minimize/maximize/close). On unsupported systems it retains the OS title bar, without borderless emulation.
 - The `?` Help is reachable with mouse and keyboard, explains usage in EN/TR and closes cleanly. Open Help while switching language.
 - Repeat scans/cancellation do not reuse stale progress events; group labels update when switching EN/TR after results are present.

@@ -358,8 +358,8 @@ class FileDNAApp(tk.Tk):
         super().__init__()
         self.language = "EN"
         self.title(f"FileDNA v{__version__} | Duplicate File Finder")
-        self.geometry("1240x840")
-        self.minsize(950, 690)
+        self.geometry("1220x780")
+        self.minsize(950, 660)
         self.configure(bg=BG)
         self.folder = tk.StringVar(value=str(Path.home()))
         self._queue: queue.Queue[tuple] = queue.Queue()
@@ -450,7 +450,7 @@ class FileDNAApp(tk.Tk):
                   troughcolor=[("active", PANEL), ("!active", PANEL)])
 
     def _layout(self):
-        root = tk.Frame(self, bg=BG, padx=26, pady=20)
+        root = tk.Frame(self, bg=BG, padx=20, pady=12)
         root.pack(fill="both", expand=True)
 
         header = tk.Frame(root, bg=BG)
@@ -461,8 +461,8 @@ class FileDNAApp(tk.Tk):
             self._label(header, "◈", color=ACCENT, size=24).pack(side="left", padx=(0, 12))
         brand = tk.Frame(header, bg=BG)
         brand.pack(side="left")
-        self._label(brand, "File", size=23, bold=True).pack(side="left")
-        self._label(brand, "DNA", size=23, bold=True, color=ACCENT).pack(side="left")
+        self._label(brand, "File", size=20, bold=True).pack(side="left")
+        self._label(brand, "DNA", size=20, bold=True, color=ACCENT).pack(side="left")
         self._label(header, "│", color=BORDER, size=18).pack(side="left", padx=(13, 10))
         self.subtitle = self._label(header, size=11, color=MUTED)
         self.subtitle.pack(side="left")
@@ -486,36 +486,36 @@ class FileDNAApp(tk.Tk):
         self.en.bind("<Button-1>", lambda _: self.set_language("EN"))
         self.tr.bind("<Button-1>", lambda _: self.set_language("TR"))
         self.tagline = self._label(root, size=10, color=DIM)
-        self.tagline.pack(anchor="w", pady=(10, 16))
-        tk.Frame(root, bg=BORDER, height=1).pack(fill="x", pady=(0, 17))
+        self.tagline.pack(anchor="w", pady=(2, 8))
+        tk.Frame(root, bg=BORDER, height=1).pack(fill="x", pady=(0, 10))
 
         controls = tk.Frame(root, bg=BG)
-        controls.pack(fill="x", pady=(0, 19))
-        folder_names = tk.Frame(controls, bg=BG, width=132)
-        folder_names.pack(side="left", fill="y", padx=(0, 12))
+        controls.pack(fill="x", pady=(0, 12))
+        folder_names = tk.Frame(controls, bg=BG, width=118)
+        folder_names.pack(side="left", fill="y", padx=(0, 8))
         folder_names.pack_propagate(False)
         self.folder_title = self._label(folder_names, size=11, bold=True)
         self.folder_title.pack(anchor="w", pady=(9, 0))
         self.folder_sub = self._label(folder_names, size=9, color=DIM)
         self.folder_sub.pack(anchor="w", pady=(3, 0))
-        entry_panel = RoundedPanel(controls, surface=FIELD, height=59,
-                                   radius=13, inset=8)
-        entry_panel.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        entry_panel = RoundedPanel(controls, surface=FIELD, height=42,
+                                   radius=10, inset=6)
+        entry_panel.pack(side="left", fill="x", expand=True, padx=(0, 8))
         self.folder_input = tk.Entry(entry_panel.body, textvariable=self.folder,
                                      bg=FIELD, fg=FG, insertbackground=FG,
                                      font=("Segoe UI", 10), relief="flat",
                                      highlightthickness=0, borderwidth=0)
         self.folder_input.pack(fill="both", expand=True, padx=8, pady=1)
-        self.browse_button = ActionButton(controls, self._browse, width=106)
-        self.browse_button.pack(side="left", fill="y", padx=(0, 9))
-        self.scan_button = ActionButton(controls, self._start_scan, primary=True, width=143)
-        self.scan_button.pack(side="left", fill="y", padx=(0, 9))
-        self.stop_button = ActionButton(controls, self._cancel_scan, width=89)
-        self.stop_button.pack(side="left", fill="y")
+        self.browse_button = ActionButton(controls, self._browse, width=83)
+        self.browse_button.pack(side="left", padx=(0, 7))
+        self.scan_button = ActionButton(controls, self._start_scan, primary=True, width=114)
+        self.scan_button.pack(side="left", padx=(0, 7))
+        self.stop_button = ActionButton(controls, self._cancel_scan, width=74)
+        self.stop_button.pack(side="left")
         self.stop_button.enable(False)
 
         cards = tk.Frame(root, bg=BG)
-        cards.pack(fill="x", pady=(0, 23))
+        cards.pack(fill="x", pady=(0, 13))
         self.metrics = {}
         for index, (key, icon, tint) in enumerate(
             (("scanned", "▤", MUTED), ("groups", "≡", ACCENT),

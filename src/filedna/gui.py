@@ -409,7 +409,14 @@ class FileDNAApp(tk.Tk):
                         font=("Segoe UI", 10))
         style.configure("DNA.Treeview.Heading", background=FIELD, foreground=MUTED,
                         borderwidth=0, relief="flat", padding=(12, 13),
+                        bordercolor=BORDER, lightcolor=FIELD, darkcolor=FIELD,
                         font=("Segoe UI Semibold", 10))
+        # clam's default heading-state map can show a white background on hover.
+        style.map("DNA.Treeview.Heading",
+                  background=[("pressed", HIGHLIGHT), ("active", FIELD),
+                              ("!active", FIELD)],
+                  foreground=[("pressed", FG), ("active", FG), ("!active", MUTED)],
+                  relief=[("pressed", "flat"), ("active", "flat")])
         style.map("DNA.Treeview", background=[("selected", "#594020")],
                   foreground=[("selected", FG)])
         style.configure("DNA.Vertical.TScrollbar", background=FIELD,
@@ -527,7 +534,8 @@ class FileDNAApp(tk.Tk):
         table_border.pack(fill="both", expand=True, pady=(0, 15))
         table_container = table_border.body
         self.tree = ttk.Treeview(table_container, columns=("size", "count", "hash"),
-                                 show="tree headings", height=6, style="DNA.Treeview")
+                                 show="tree headings", height=6, selectmode="extended",
+                                 style="DNA.Treeview")
         self.tree.column("#0", width=500, minwidth=220, stretch=True)
         self.tree.column("size", width=125, stretch=False, anchor="e")
         self.tree.column("count", width=78, stretch=False, anchor="center")
@@ -540,6 +548,17 @@ class FileDNAApp(tk.Tk):
         self.tree.tag_configure("group", foreground=ACCENT)
         self.tree.bind("<<TreeviewSelect>>", self._on_selection)
         self.tree.bind("<Double-1>", lambda _: self._open_selected())
+        self.tree.bind("<Button-3>", self._show_context_menu)
+        self.tree.bind("<Control-a>", self._select_all_extras)
+        self.tree.bind("<Control-c>", self._copy_selected_paths)
+        self.tree.bind("<Delete>", self._recycle_selected)
+        self.tree.bind("<Escape>", self._clear_selection)
+        self._context_menu = tk.Menu(
+            self, tearoff=False, bg=FIELD, fg=FG,
+            activebackground=HIGHLIGHT, activeforeground=FG,
+            disabledforeground=DIM, bd=1, relief="flat",
+            font=("Segoe UI", 10),
+        )
         self.empty = tk.Frame(table_container, bg=PANEL, padx=15, pady=15)
         self._label(self.empty, "⌕", size=48, color=DIM, bg=PANEL).pack()
         self.empty_title = self._label(self.empty, size=14, bold=True, bg=PANEL)

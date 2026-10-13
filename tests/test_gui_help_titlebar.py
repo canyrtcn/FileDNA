@@ -72,7 +72,7 @@ class HelpIntegrationTests(unittest.TestCase):
         self.assertIsNone(self.app._help_window)
 
     def test_help_button_keyboard_focus_and_close_idempotency(self):
-        self.assertEqual(self.app.help_button.cget("takefocus"), "1")
+        self.assertIn(str(self.app.help_button.cget("takefocus")).lower(), ("1", "true"))
         self.app._open_help()
         self.app._close()
         self.assertIsNone(self.app._help_window)

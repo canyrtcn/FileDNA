@@ -56,7 +56,7 @@ CHECKS = (
         "machine-specific workspace path",
         re.compile(
             r"\b[A-Za-z]:[\\/][^\\/<>:\"'\s]+[\\/]"
-            r"(?:AgentWorkspace|AppData)[\\/]",
+            r"[^\\/<>:\"'\s]+[\\/]",
             re.IGNORECASE,
         ),
     ),

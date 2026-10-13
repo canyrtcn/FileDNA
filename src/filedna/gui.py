@@ -77,6 +77,7 @@ WORDS = {
                         "Kalıcı silme alternatifi YOK."),
     "recycle_failed": ("Cleanup blocked", "Temizleme engellendi"),
     "recycle_progress": ("Moving to Recycle Bin", "Geri Dönüşüm Kutusuna taşınıyor"),
+    "recycle_progress_detail": ("Please wait…", "Lütfen bekleyin…"),
     "recycle_finished": ("Recycle Bin cleanup completed", "Geri Dönüşüm Kutusu temizliği tamamlandı"),
     "recycle_result": ("Moved: {moved}; failed/skipped: {failed}. Results will be rescanned.",
                        "Taşınan: {moved}; başarısız/atlanan: {failed}. Sonuçlar tekrar taranacak."),
@@ -522,12 +523,15 @@ class FileDNAApp(tk.Tk):
         self.results_title.pack(anchor="w")
         self.results_sub = self._label(results_heading, size=9, color=MUTED)
         self.results_sub.pack(anchor="w", pady=(3, 0))
+        self.select_button = ActionButton(results_row, self._select_all_extras, width=155)
+        self.select_button.pack(side="right", fill="y", padx=(0, 10))
         self.export_button = ActionButton(results_row, self._export_json, width=142)
         self.export_button.pack(side="right", fill="y")
         self.open_button = ActionButton(results_row, self._open_selected, width=174)
         self.open_button.pack(side="right", fill="y", padx=(0, 10))
         self.export_button.enable(False)
         self.open_button.enable(False)
+        self.select_button.enable(False)
 
         table_border = RoundedPanel(root, surface=PANEL, radius=17,
                                     inset=8, height=190)
@@ -633,6 +637,7 @@ class FileDNAApp(tk.Tk):
             self._refresh_help()
         self.folder_title.configure(text=self._both("folder")[0])
         self.folder_sub.configure(text=self._both("folder")[1])
+        self.select_button.set_text(*self._both("select_all"))
         for button, key in ((self.browse_button, "browse"), (self.scan_button, "scan"),
                             (self.stop_button, "stop"), (self.open_button, "open"),
                             (self.export_button, "export")):
@@ -883,6 +888,7 @@ class FileDNAApp(tk.Tk):
         self._draw_progress()
         self.percent.configure(text="100%")
         self.export_button.enable(True)
+        self.select_button.enable(bool(report.groups))
         self._finish("finished")
         self._translate()
         self.status_detail.configure(text=f"{len(report.groups)} {self._tr('groups').lower()}")
@@ -990,7 +996,7 @@ class FileDNAApp(tk.Tk):
         self._cleanup_running = True
         self._state = "recycle_progress"
         self.status_title.configure(text=self._tr("recycle_progress"))
-        self.status_detail.configure(text=f"{len(plan.paths)} selected")
+        self.status_detail.configure(text=f"{len(plan.paths)} · {self._tr('recycle_progress_detail')}")
         self.scan_button.enable(False)
         self.browse_button.enable(False)
         self.stop_button.enable(False)
@@ -1018,6 +1024,7 @@ class FileDNAApp(tk.Tk):
         self.browse_button.enable(True)
         self.stop_button.enable(False)
         self.export_button.enable(self._report is not None)
+        self.select_button.enable(self._report is not None and bool(self._report.groups))
         self.folder_input.configure(state="normal")
         if error is not None:
             self.status_title.configure(text=self._tr("recycle_failed"))

@@ -103,7 +103,7 @@ flowchart TD
 .\scripts\build.ps1
 ```
 
-The test script installs the project in a local virtual environment and runs the unittest suite. GUI tests require a graphical session. The build script generates application icon assets and uses PyInstaller to produce a standalone Windows executable:
+The test and build scripts first run `scripts/check_repo.py`, a dependency-free safety check for obvious credentials, machine-specific paths and private/generated files among **tracked** source files. It requires a Git checkout and is not a historical-secret scanner. The test script then installs the project in a local virtual environment and runs the unittest suite. GUI tests require a graphical session. The build script generates application icon assets and uses PyInstaller to produce a standalone Windows executable:
 
 ```text
 dist\FileDNA.exe

@@ -26,23 +26,23 @@ GITHUB_PROFILE = "https://github.com/canyrtcn"
 GITHUB_REPO = "https://github.com/canyrtcn/FileDNA"
 
 # Restrained graphite / amber palette. Keep status green for non-actionable values.
-BG = "#121110"
-PANEL = "#201d1a"
-FIELD = "#29251f"
-BORDER = "#493d2d"
-FG = "#f3eee6"
-MUTED = "#c0b6a8"
-DIM = "#9c8b77"
+BG = "#141413"
+PANEL = "#1d1d1b"
+FIELD = "#282722"
+BORDER = "#3b3932"
+FG = "#f2f0eb"
+MUTED = "#ada99f"
+DIM = "#868176"
 ACCENT = "#f3b544"
 HOVER = "#ffd17a"
 GREEN = "#8fc5a2"
 AMBER = "#e4a338"
-BUTTON_DISABLED = "#231f1b"
+BUTTON_DISABLED = "#25241f"
 DARK_INK = "#21170c"
 CAPTION_BG = BG
 CAPTION_TEXT = FG
 CARD_VALUE = "#fff6e7"
-HIGHLIGHT = "#6b4b23"
+HIGHLIGHT = "#463b2a"
 
 # The first value is English, the second Turkish. Active language is the
 # large, primary label; the alternative remains a subtle secondary label.
@@ -65,6 +65,9 @@ WORDS = {
     "count": ("Files", "Dosya"),
     "select_all": ("Select extra copies (Ctrl+A)", "Fazladan kopyaları seç (Ctrl+A)"),
     "select_button": ("Select extras", "Fazla kopyaları seç"),
+    "open_short": ("Open location", "Konumu aç"),
+    "export_short": ("Export JSON", "JSON aktar"),
+    "select_short": ("Select extras", "Fazlaları seç"),
     "select_group": ("Select extras in group", "Gruptaki fazla kopyaları seç"),
     "clear_selection": ("Clear selection (Esc)", "Seçimi temizle (Esc)"),
     "copy_paths": ("Copy paths (Ctrl+C)", "Yolları kopyala (Ctrl+C)"),
@@ -259,38 +262,48 @@ class RoundedPanel(tk.Canvas):
 
 
 class ActionButton(tk.Canvas):
-    """Keyboard-accessible rounded two-line button retaining legacy test hooks."""
+    """Compact keyboard-accessible rounded button.
 
-    def __init__(self, parent, callback, *, primary=False, width=130):
-        super().__init__(parent, bg=parent.cget("bg"), width=width, height=59,
+    Secondary localized text stays available for compatibility and tooling,
+    but isn't rendered: the EN/TR toggle controls the visible label.
+    """
+
+    def __init__(self, parent, callback, *, primary=False, width=112, height=40):
+        super().__init__(parent, bg=parent.cget("bg"), width=width, height=height,
                          bd=0, highlightthickness=0, takefocus=1, cursor="hand2")
         self.callback = callback
         self.primary = primary
         self.enabled = True
         self._hovered = False
-        self._title_window = None
-        self._sub_window = None
-        self.surface = self  # legacy attribute retained for GUI regression tests
-        self.main = tk.Label(self, bg=ACCENT if primary else FIELD,
-                             fg=DARK_INK if primary else FG,
-                             font=("Segoe UI Semibold", 10), bd=0)
-        self.small = tk.Label(self, bg=ACCENT if primary else FIELD,
-                              fg="#694817" if primary else MUTED,
-                              font=("Segoe UI", 8), bd=0)
-        self._title_window = self.create_window(width / 2, 22,
-                                                  window=self.main, anchor="center")
-        self._sub_window = self.create_window(width / 2, 41,
-                                                window=self.small, anchor="center")
+        self.surface = self
+        self.main = tk.Label(
+            self, bg=ACCENT if primary else FIELD,
+            fg=DARK_INK if primary else FG,
+            font=("Segoe UI Semibold", 10), bd=0,
+        )
+        # Preserve earlier test/automation hooks while avoiding repeated
+        # translations competing for vertical space.
+        self.small = tk.Label(
+            self, bg=ACCENT if primary else FIELD, fg=MUTED,
+            font=("Segoe UI", 8), bd=0,
+        )
+        self._title_window = self.create_window(
+            width / 2, height / 2, window=self.main, anchor="center"
+        )
+        self._sub_window = self.create_window(
+            width / 2, height / 2, window=self.small,
+            anchor="center", state="hidden",
+        )
         self.bind("<Configure>", self._redraw)
         self.bind("<Button-1>", lambda _e: self.click())
         self.bind("<Return>", lambda _e: self.click())
         self.bind("<space>", lambda _e: self.click())
         self.bind("<Enter>", lambda _e: self.paint(True))
         self.bind("<Leave>", lambda _e: self.paint(False))
-        for child in (self.main, self.small):
-            child.bind("<Button-1>", lambda _e: self.click())
-            child.bind("<Enter>", lambda _e: self.paint(True))
-            child.bind("<Leave>", lambda _e: self.paint(False))
+        for label in (self.main, self.small):
+            label.bind("<Button-1>", lambda _e: self.click())
+            label.bind("<Enter>", lambda _e: self.paint(True))
+            label.bind("<Leave>", lambda _e: self.paint(False))
         self.paint(False)
 
     def set_text(self, primary: str, secondary: str):
@@ -306,18 +319,15 @@ class ActionButton(tk.Canvas):
 
     def paint(self, hover: bool):
         self._hovered = hover if self.enabled else False
-        if not self.enabled:
-            fill = BUTTON_DISABLED
-        elif self.primary:
-            fill = HOVER if hover else ACCENT
-        else:
-            fill = "#393024" if hover else FIELD
-        self.main.configure(bg=fill,
-                            fg=DARK_INK if self.primary and self.enabled else
-                            FG if self.enabled else DIM)
-        self.small.configure(bg=fill,
-                             fg="#694817" if self.primary and self.enabled else
-                             MUTED if self.enabled else DIM)
+        fill = (BUTTON_DISABLED if not self.enabled else
+                HOVER if self.primary and self._hovered else
+                ACCENT if self.primary else
+                "#333029" if self._hovered else FIELD)
+        self.main.configure(
+            bg=fill, fg=(DARK_INK if self.primary and self.enabled
+                         else FG if self.enabled else DIM)
+        )
+        self.small.configure(bg=fill, fg=DIM if not self.enabled else MUTED)
         self._redraw()
 
     def _redraw(self, _event=None):
@@ -326,19 +336,17 @@ class ActionButton(tk.Canvas):
             return
         self.delete("button-background")
         old = set(self.find_all())
-        if not self.enabled:
-            fill = BUTTON_DISABLED
-        elif self.primary:
-            fill = HOVER if self._hovered else ACCENT
-        else:
-            fill = "#393024" if self._hovered else FIELD
-        _rounded_shape(self, 1, 1, w - 1, h - 1, 12, fill,
+        fill = (BUTTON_DISABLED if not self.enabled else
+                HOVER if self.primary and self._hovered else
+                ACCENT if self.primary else
+                "#333029" if self._hovered else FIELD)
+        _rounded_shape(self, 1, 1, w - 1, h - 1, 9, fill,
                        ACCENT if self.primary and self.enabled else BORDER)
         for item in set(self.find_all()) - old:
             self.addtag_withtag("button-background", item)
             self.tag_lower(item)
-        self.coords(self._title_window, w / 2, h / 2 - 9)
-        self.coords(self._sub_window, w / 2, h / 2 + 10)
+        self.coords(self._title_window, w / 2, h / 2)
+        self.coords(self._sub_window, w / 2, h / 2)
 
     def click(self):
         if self.enabled:

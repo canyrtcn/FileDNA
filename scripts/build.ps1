@@ -6,6 +6,8 @@ if (-not (Test-Path '.venv\Scripts\python.exe')) {
     if ($LASTEXITCODE -ne 0) { throw 'Could not create virtual environment' }
 }
 $python = Join-Path (Get-Location) '.venv\Scripts\python.exe'
+& $python scripts\check_repo.py
+if ($LASTEXITCODE -ne 0) { throw 'Repository security check failed' }
 & $python -m pip install -e . pyinstaller pillow
 if ($LASTEXITCODE -ne 0) { throw 'Build dependency installation failed' }
 

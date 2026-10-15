@@ -12,7 +12,7 @@ The optional cleanup workflow requires an explicit selection and confirmation be
 
 - **Content-based matching:** file size and SHA-256, independent of filename or extension.
 - **Efficient scanning:** hashes only potential duplicates, using streaming reads instead of loading entire files into memory.
-- **Read-only discovery:** scanning never moves, renames or deletes files.
+- **Read-only discovery:** scanning never moves, renames, or deletes files.
 - **Review before cleanup:** duplicate groups, file paths, sizes and a potential space-recovery estimate.
 - **Optional Recycle Bin cleanup:** deliberate selection and confirmation; no permanent-delete fallback.
 - **Copy protection:** refuses to recycle every file in a duplicate group and verifies an unchanged matching copy before attempting cleanup.

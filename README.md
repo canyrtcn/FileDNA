@@ -1,5 +1,7 @@
 # FileDNA
 
+[![Release](https://img.shields.io/github/v/release/canyrtcn/FileDNA?label=Release&color=2ea44f&style=flat)](https://github.com/canyrtcn/FileDNA/releases/latest) ![Platform](https://img.shields.io/badge/Platform-Windows-0078D4?style=flat) [![License](https://img.shields.io/badge/License-MIT-97CA00?style=flat)](LICENSE) ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat) ![UI](https://img.shields.io/badge/UI-Tkinter-555555?style=flat)
+
 ![FileDNA](assets/filedna.svg)
 
 **Find and manage exact duplicate files on Windows.**

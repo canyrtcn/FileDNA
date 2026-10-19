@@ -82,7 +82,7 @@ When cleanup is confirmed, FileDNA:
 
 Recycling may be unavailable on some external drives, network locations or protected folders. In those cases, the operation must fail rather than silently remove a file.
 
-## How scanning works
+## How scanning works:
 
 ```mermaid
 flowchart TD

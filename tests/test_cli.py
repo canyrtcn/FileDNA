@@ -6,7 +6,7 @@ import io
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 
 from filedna import __version__
@@ -38,6 +38,16 @@ class CLITests(unittest.TestCase):
     def test_missing_root_returns_error_code(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(main([str(Path(tmp) / "nope")]), 2)
+
+    def test_unwritable_json_path_returns_error_code(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a").write_bytes(b"duplicate")
+            (root / "b").write_bytes(b"duplicate")
+            err = io.StringIO()
+            with redirect_stderr(err):
+                self.assertEqual(main([str(root), "--json", "a\0b.json"]), 2)
+            self.assertIn("Could not save JSON report", err.getvalue())
 
 
 if __name__ == "__main__":

@@ -54,7 +54,7 @@ def main(argv: list[str] | None = None) -> int:
         destination = Path(args.json_path)
         try:
             destination.write_text(json.dumps(report.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8")
-        except OSError as exc:
+        except (OSError, ValueError) as exc:
             print(f"Could not save JSON report: {exc}", file=sys.stderr)
             return 2
         print(f"\nJSON report: {destination}")
